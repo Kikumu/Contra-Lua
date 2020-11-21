@@ -49,6 +49,8 @@ end
 --a((i*w) + (i*w) + (i*w))
 
 
+
+--FIND A WAY TO RESTRUCTURE THE WAY OU START CREATING YOUR GENES. FROM CURRENT SPECULATION, THE POPULATION CREATION WORKS ALONGSIDE ALL THESE FACTORS TO CREATE DIFFERENT SPECIES (HENCE SPECIES POOL WITHIN THE POPULATION)
 function newGene()
 
 innovationGene = 0
@@ -97,45 +99,59 @@ end
 
 function mutateNodeGene(gene)
 --pick a random node/neuron/connection gene
-node1 = gene[math.random(1,#gene)]
+genepos = math.random(1,#gene)
+node1 = gene[genepos]
 
---max value?
 
+
+--disable gene
 node1.status = false
 
---node1.out?
+--put it back
 
+gene[genepos] = node1
+
+print("node1 in: "..node1.input)
 --node one in to new connection to new neuron
 
-connectionGeneMutate1 = new connectionGene()
+connectionGeneMutate1 = connectionGene()
 
 connectionGeneMutate1.input = node1.input
 connectionGeneMutate1.innovation = node1.innovation + 1
 --connectionGeneMutate1.output = a(i*w)?
+connectionGeneMutate1.output = 1
+table.insert(gene,connectionGeneMutate1)
 
---table.insert(newGeneOut,i,parentgene)
-
-connectionGeneMutate2 = new connectionGene()
+connectionGeneMutate2 = connectionGene()
 connectionGeneMutate2.inputs = connectionGeneMutate1.out
 connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
 
 --connectionGeneMutate2.output = a(i*w)?
+connectionGeneMutate2.output = node1.out
+table.insert(gene,connectionGeneMutate1)
 
---table.insert(newGeneOut,i,parentgene)
-
+return gene
 end
 
 function crossover(gene1,gene2)
 
 end
 
+function species(genes)
+
+speciesPool = {}
+
+
+return speciesPool
+end
+
 
 x = newGene()
-mutateConnectionGene(x)
+y = mutateNodeGene(x)
 
 print("number is "..#inputs)
 print(x[2].weight)
-print(#x)
+print(#y)
 
 
 
