@@ -13,6 +13,12 @@ weightImportance = 0.1 --c3
 --N number of connection genes
 
 --general formula on paper: ( c1*E/N + c2*D/N + c3*W)
+--[[there is one thing that bothers me...i have physical locations of every connection gene but no
+actual place for the "data points" will correct this but first..some cod!!!
+]]
+
+local neurons = {}
+
 
 
 local inputs = {}
@@ -74,8 +80,8 @@ end
 function mutateConnectionGene(gene)
 --take 2 random nodes and adds a connection between them if none are available
 
-node1 = gene[math.random(1,3)]
-node2 = gene[math.random(1,3)]
+node1 = gene[math.random(1,#gene)]
+node2 = gene[math.random(1,#gene)]
 --print ('Node 1 '..node1.weight)
 --print ('Node 2 '..node2.weight)
 state1 = 0
@@ -90,10 +96,26 @@ if node1.out~=node2.input then
 state2 = 1
 end
 
+--
+if state1 == 1 then
+connectionGeneMutate1 = connectionGene()
+connectionGeneMutate1.input = node1.input
+connectionGeneMutate1.innovation = node1.innovation + 1
+connectionGeneMutate1.out = node2.input
+--connectionGeneMutate1.output = a(i*w)?
+connectionGeneMutate1.out= node2.input
+table.insert(gene,connectionGeneMutate1)
+end
+
+--if state2 == 1 then
+
+--end
+
 
 
 print('state1: '..state1)
 print('state2: '..state2)
+return gene
 end
 
 
@@ -101,7 +123,6 @@ function mutateNodeGene(gene)
 --pick a random node/neuron/connection gene
 genepos = math.random(1,#gene)
 node1 = gene[genepos]
-
 
 
 --disable gene
@@ -123,12 +144,12 @@ connectionGeneMutate1.output = 1
 table.insert(gene,connectionGeneMutate1)
 
 connectionGeneMutate2 = connectionGene()
-connectionGeneMutate2.inputs = connectionGeneMutate1.out
+connectionGeneMutate2.input = connectionGeneMutate1.out
 connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
 
 --connectionGeneMutate2.output = a(i*w)?
-connectionGeneMutate2.output = node1.out
-table.insert(gene,connectionGeneMutate1)
+connectionGeneMutate2.out = node1.out
+table.insert(gene,connectionGeneMutate2)
 
 return gene
 end
@@ -149,9 +170,12 @@ end
 x = newGene()
 y = mutateNodeGene(x)
 
+
 print("number is "..#inputs)
 print(x[2].weight)
 print(#y)
+print(y[5].innovation)
+
 
 
 
