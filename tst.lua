@@ -1,6 +1,6 @@
 mutationChance = 0.5
 geneActivationChance = 0.5
-
+selectionChance = 0.3 --this value is used to choose between 2 connection genes of the same innovation
 --species classification variables
 
 disjointment = 0.2 --c1
@@ -14,11 +14,12 @@ weightImportance = 0.1 --c3
 
 --general formula on paper: ( c1*E/N + c2*D/N + c3*W)
 --[[there is one thing that bothers me...i have physical locations of every connection gene but no
-actual place for the "data points" will correct this but first..some cod!!!
+actual place for the "data points" will correct this but first..some cod!!! DONE
 ]]
+--Now for de crossover of my little croissants
 
 local neurons = {}
-
+neurons[1] = 20
 
 
 local inputs = {}
@@ -57,7 +58,7 @@ end
 
 
 --FIND A WAY TO RESTRUCTURE THE WAY OU START CREATING YOUR GENES. FROM CURRENT SPECULATION, THE POPULATION CREATION WORKS ALONGSIDE ALL THESE FACTORS TO CREATE DIFFERENT SPECIES (HENCE SPECIES POOL WITHIN THE POPULATION)
-function newGene()
+function newGenome() --just creates starting pop, a single genome
 
 innovationGene = 0
 newGeneOut = {}
@@ -140,7 +141,10 @@ connectionGeneMutate1 = connectionGene()
 connectionGeneMutate1.input = node1.input
 connectionGeneMutate1.innovation = node1.innovation + 1
 --connectionGeneMutate1.output = a(i*w)?
-connectionGeneMutate1.output = 1
+--add neuron to a table
+incrementneurons = #neurons + 1
+neurons[incrementneurons] = math.random()
+connectionGeneMutate1.output = neurons[incrementneurons]
 table.insert(gene,connectionGeneMutate1)
 
 connectionGeneMutate2 = connectionGene()
@@ -154,27 +158,163 @@ table.insert(gene,connectionGeneMutate2)
 return gene
 end
 
-function crossover(gene1,gene2)
+
+
+--for crossover purposes(Goal is to add to g1)
+function matchingGenes(g1,g2)
+matchedGenes ={}
+g1Length = #g1
+g2Length = #g2
+
+for i = 0, g1Length do
+for j = 0, g2Length do
+if g1[i].innovation == g2[j].innovation then
+if selectionChance > math.random()
+table.insert(matchedGenes,g1[i])
+else
+table.insert(matchedGenes,g2[j])
+end
+end
+end
+
+return matchedGenes
+end
+
+
+--(takes disjointed genes from g2), goal is to add to G1
+function disjointGenes(g1,g2)
+
+--pick max innovation number from g1 asnd g2
+maxInnovation = 0
+disjointedGenes = {}
+g2MaxInnovation = g2[#g2].innovation
+g1MaxInnovation = g1[#g1].innovation
+g1Length = #g1
+g2Length = #g2
+
+for i = 0, g1Length do
+for j = 0, g2Length do
+if g1[i].innovation ~= g2[j].innovation and g2[j].innovation < g1MaxInnovation then
+table.insert(disjointedGenes, g2[i])
+end
+end
+end
+
+
+return disjointedGenes
 
 end
+
+
+--confident(not tested)
+function excessGenes(g1,g2)
+ExcessGenesTable = {}
+--find excess genes in g2(which are located in g1)
+maxInnovationg1 = g1[#g1].innovation
+maxInnovationg2 = g2[#g2].innovation
+g1Length = #g1
+g2Length = #g2
+
+if maxInnovationg1 > maxInnovationg2
+for i = 0, g1Length do
+if g1[i].innovation > maxInnovationg2 then
+table.insert(ExcessGenesTable, g1[i])
+end
+end
+end
+
+if maxInnovationg2 > maxInnovationg1
+for i = 0, g2Length do
+if g2[i].innovation > maxInnovationg1 then
+table.insert(ExcessGenesTable, g2[i])
+end
+end
+end
+return ExcessGenesTable
+end
+
+
+--sorted child gene according to innovation number
+function selectionSort(DisjointedGenesArr, ExcessGenesArr, MatchingGenesArr)
+
+genesToSort = {}
+table.insert(genesToSort,DisjointedGenesArr)
+table.insert(genesToSort,ExcessGenesArr)
+table.insert(genesToSort,MatchingGenesArr)
+
+for i = 0, #genesToSort do
+minInnovationIndex = i
+for j = i + 1, #genesToSort do
+if genesToSort[j].innovation < genesToSort[minInnovationIndex].innovation then
+minInnovationIndex = j
+end
+end
+tempg = genesToSort[i]
+genesToSort[i] = genesToSort[minInnovationIndex]
+genesToSort[minInnovationIndex] = tempg
+
+end
+
+return genesToSort
+end
+
+
+--breed
+function crossover(genome) --genome in the sense that you are passing to this function a set of genomes
+
+childGenome= {}
+
+childlength = 0
+gene1 = genome[math.random(1,#genome)]
+gene2 = genome[math.random(1,#genome)]
+
+
+
+end
+
+--if they are not equal, it could either be: an excess gene OR a disjoint gene.
+--how do i tell the difference....
+--an excess gene exceeds parameters(innovation number) of another gene
+if gene1[i].innovation ~= gene2[i].innovation then
+
+end
+--[[what about excesses and disjoints. Remember, Excesses are above the innovation numbers
+of a genome while disjoints are innovation numbers in which one parent has and the other
+hasnt in the middle]]
+
+--lets start with disjoints
+--given 2 genomes
+
+
+
+
+
+end
+
+end
+
+
+
+
+
 
 function species(genes)
 
 speciesPool = {}
 
-
 return speciesPool
 end
 
 
-x = newGene()
+x = newGenome()
 y = mutateNodeGene(x)
 
 
 print("number is "..#inputs)
 print(x[2].weight)
-print(#y)
+print(#neurons)
 print(y[5].innovation)
+print(neurons[2])
 
 
 
