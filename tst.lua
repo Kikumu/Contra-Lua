@@ -84,7 +84,7 @@ return newGeneOut
 end
 
 
-
+--tested
 function mutateConnectionGene(gene)
 --take 2 random nodes and adds a connection between them if none are available
 max = retunMaxInnovation(gene)
@@ -189,14 +189,14 @@ end
 
 
 
---for crossover purposes(Goal is to add to g1)
+--for crossover purposes(Goal is to add to g1)tested
 function matchingGenes(g1,g2)
 matchedGenes ={}
 g1Length = #g1
 g2Length = #g2
 
-for i = 0, g1Length do
-for j = 0, g2Length do
+for i = 1, g1Length do
+for j = 1, g2Length do
 if g1[i].innovation == g2[j].innovation then
 if selectionChance > math.random() then
 table.insert(matchedGenes,g1[i])
@@ -217,26 +217,31 @@ function disjointGenes(g1,g2)
 --pick max innovation number from g1 asnd g2
 maxInnovation = 0
 disjointedGenes = {}
-g2MaxInnovation = g2[#g2].innovation
-g1MaxInnovation = g1[#g1].innovation
-g1Length = #g1
+g2MaxInnovation = retunMaxInnovation(g2)
+g1MaxInnovation = retunMaxInnovation(g1)
 g2Length = #g2
+g1Length = #g1
 
-for i = 0, g1Length do
-for j = 0, g2Length do
-if g1[i].innovation ~= g2[j].innovation and g2[j].innovation < g1MaxInnovation then
-table.insert(disjointedGenes, g2[i])
+found = 0
+for i = 1, #g2 do
+  for j = 1, #g1 do
+    if g1[j].innovation < g2MaxInnovation then
+    if g2[i].innovation == g1[j].innovation then
+      found = 1
+    end
+  end
+if found == 0 then
+table.insert(disjointedGenes,g2[i])
 end
-end
-end
+    end
 
-
+end
 return disjointedGenes
 
 end
 
 
---confident(not tested)
+--confident(tested)
 function excessGenes(g1,g2)
 ExcessGenesTable = {}
 --find excess genes in g2(which are located in g1)
@@ -246,15 +251,16 @@ g1Length = #g1
 g2Length = #g2
 
 if maxInnovationg1 > maxInnovationg2 then
-for i = 0, g1Length do
+for i = 1, g1Length do
 if g1[i].innovation > maxInnovationg2 then
 table.insert(ExcessGenesTable, g1[i])
 end
 end
+return ExcessGenesTable
 end
 
 if maxInnovationg2 > maxInnovationg1 then
-for i = 0, g2Length do
+for i = 1, g2Length do
 if g2[i].innovation > maxInnovationg1 then
 table.insert(ExcessGenesTable, g2[i])
 end
@@ -263,18 +269,36 @@ end
 return ExcessGenesTable
 end
 
+function accumilateGenesForSorting(genes,tbs)
+  for i = 1, #genes do
+    table.insert(tbs,genes[i])
+  end
+  return tbs
+end
+
 
 --sorted child gene according to innovation number
 function selectionSort(DisjointedGenesArr, ExcessGenesArr, MatchingGenesArr)
 
 genesToSort = {}
-table.insert(genesToSort,DisjointedGenesArr)
-table.insert(genesToSort,ExcessGenesArr)
-table.insert(genesToSort,MatchingGenesArr)
+print("in selection sort,d to sortNumber "..#DisjointedGenesArr)
+print("in selection sort,e to sortNumber "..#ExcessGenesArr)
+print("in selection sort,m to sortNumber "..#MatchingGenesArr)
 
-for i = 0, #genesToSort do
+--table.insert(genesToSort,DisjointedGenesArr)
+--table.insert(genesToSort,ExcessGenesArr)
+--table.insert(genesToSort,MatchingGenesArr)
+accumilateGenesForSorting(DisjointedGenesArr,genesToSort)
+accumilateGenesForSorting(ExcessGenesArr,genesToSort)
+accumilateGenesForSorting(MatchingGenesArr,genesToSort)
+
+
+print("in selection sort,genes to sortNumber "..#genesToSort)
+for i = 1, #genesToSort do
 minInnovationIndex = i
 for j = i + 1, #genesToSort do
+print("selection no: "..j)
+print("innovation in sort..........."..genesToSort[j].innovation)
 if genesToSort[j].innovation < genesToSort[minInnovationIndex].innovation then
 minInnovationIndex = j
 end
@@ -291,12 +315,16 @@ end
 
 --breed
 function crossover(genome) --genome in the sense that you are passing to this function a set of genomes
-
-childGenome= {}
-
+--childGenome= {}
 childlength = 0
 gene1 = genome[math.random(1,#genome)]
 gene2 = genome[math.random(1,#genome)]
+m = matchingGenes(gene1,gene2)
+d = disjointGenes(gene1,gene2)
+e = excessGenes(gene1,gene2)
+res = selectionSort(d, e, m)
+return res
+
 end
 
 
@@ -393,18 +421,40 @@ print("number of values " ..countNodes)
 
 --print(""..neurons[2])
 --print("number of yval " ..y[5].input)
-
+geneCluster = {}
 x = newGenome()
-y = mutateNodeGene(x)
-y = mutateNodeGene(y)
-y = mutateNodeGene(y)
-y = mutateConnectionGene(y)
+mutateNodeGene(x)
+mutateNodeGene(x)
+
+y = newGenome()
+mutateNodeGene(y)
+mutateConnectionGene(y)
+
 --
+table.insert(geneCluster,x)
+table.insert(geneCluster,y)
+
+print("gene cluster "..#geneCluster)
+z = crossover(geneCluster)
+
+for i=1,#x do
+print("in"..x[i].input)
+print("out"..x[i].out)
+end
+print("gene 1 "..#x)
+--print("gene 2 "..#y)
 for i=1,#y do
 print("in"..y[i].input)
 print("out"..y[i].out)
 end
-
-
-
+print("gene 2 "..#y)
+print("gene 3 "..#z)
+--a = matchingGenes(x,y)
+--a = excessGenes(x,y)
+--a = disjointGenes(x,y)
+print("number of genes in child"..#z)
+for i=1,#z do
+print("in"..z[i].input)
+print("out"..z[i].out)
+end
 
