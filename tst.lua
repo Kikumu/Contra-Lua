@@ -19,9 +19,11 @@ actual place for the "data points" will correct this but first..some cod!!! DONE
 --[[
 
 TO DO:
-1) Take it out for a test spin to test out functions created
-2) Find a way to keep track of the fitness of each genome
-3) Create function to organise a group of genes into different speciesPool
+1) Take it out for a test spin to test out functions created --DONE
+2) Test propagation
+3) Neurons holder for each network created
+4) Find a way to keep track of the fitness of each genome
+5) Create function to organise a group of genes into different speciesPool
 
 ]]
 
@@ -418,7 +420,6 @@ print("number of values " ..countNodes)
 
 
 
-
 --print(""..neurons[2])
 --print("number of yval " ..y[5].input)
 geneCluster = {}
@@ -458,3 +459,14 @@ print("in"..z[i].input)
 print("out"..z[i].out)
 end
 
+function genomeClusterEvaluater(genome)
+  genomeCluster = {} --holds the gene information network
+  genomeCluster.genes = {}
+  genomeCluster.fitness = 0
+  end
+testPropagate = newGenome()
+--try and forward propagate testPropagate
+--find all connected lines and
+for i = 1, #testPropagate do
+
+  end
