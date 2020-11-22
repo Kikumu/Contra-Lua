@@ -16,7 +16,14 @@ weightImportance = 0.1 --c3
 --[[there is one thing that bothers me...i have physical locations of every connection gene but no
 actual place for the "data points" will correct this but first..some cod!!! DONE
 ]]
---Now for de crossover of my little croissants
+--[[
+
+TO DO:
+1) Take it out for a test spin to test out functions created
+2) Find a way to keep track of the fitness of each genome
+3) Create function to organise a group of genes into different speciesPool
+
+]]
 
 local neurons = {}
 neurons[1] = 20
@@ -169,10 +176,11 @@ g2Length = #g2
 for i = 0, g1Length do
 for j = 0, g2Length do
 if g1[i].innovation == g2[j].innovation then
-if selectionChance > math.random()
+if selectionChance > math.random() then
 table.insert(matchedGenes,g1[i])
 else
 table.insert(matchedGenes,g2[j])
+end
 end
 end
 end
@@ -215,7 +223,7 @@ maxInnovationg2 = g2[#g2].innovation
 g1Length = #g1
 g2Length = #g2
 
-if maxInnovationg1 > maxInnovationg2
+if maxInnovationg1 > maxInnovationg2 then
 for i = 0, g1Length do
 if g1[i].innovation > maxInnovationg2 then
 table.insert(ExcessGenesTable, g1[i])
@@ -223,7 +231,7 @@ end
 end
 end
 
-if maxInnovationg2 > maxInnovationg1
+if maxInnovationg2 > maxInnovationg1 then
 for i = 0, g2Length do
 if g2[i].innovation > maxInnovationg1 then
 table.insert(ExcessGenesTable, g2[i])
@@ -267,31 +275,9 @@ childGenome= {}
 childlength = 0
 gene1 = genome[math.random(1,#genome)]
 gene2 = genome[math.random(1,#genome)]
-
-
-
 end
 
---if they are not equal, it could either be: an excess gene OR a disjoint gene.
---how do i tell the difference....
---an excess gene exceeds parameters(innovation number) of another gene
-if gene1[i].innovation ~= gene2[i].innovation then
 
-end
---[[what about excesses and disjoints. Remember, Excesses are above the innovation numbers
-of a genome while disjoints are innovation numbers in which one parent has and the other
-hasnt in the middle]]
-
---lets start with disjoints
---given 2 genomes
-
-
-
-
-
-end
-
-end
 
 
 
