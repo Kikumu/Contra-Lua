@@ -87,7 +87,7 @@ end
 
 function mutateConnectionGene(gene)
 --take 2 random nodes and adds a connection between them if none are available
-
+max = retunMaxInnovation(gene)
 node1 = gene[math.random(1,#gene)]
 node2 = gene[math.random(1,#gene)]
 --print ('Node 1 '..node1.weight)
@@ -105,62 +105,84 @@ state2 = 1
 end
 
 --
-if state1 == 1 then
+if state1 == 1 and state2 == 1 then
 connectionGeneMutate1 = connectionGene()
 connectionGeneMutate1.input = node1.input
-connectionGeneMutate1.innovation = node1.innovation + 1
+connectionGeneMutate1.innovation = max + 1
 connectionGeneMutate1.out = node2.input
 --connectionGeneMutate1.output = a(i*w)?
+print("a gene has been mutated by connection")
 connectionGeneMutate1.out= node2.input
 table.insert(gene,connectionGeneMutate1)
+
+return gene
 end
 
 --if state2 == 1 then
 
 --end
 
-
-
 print('state1: '..state1)
 print('state2: '..state2)
 return gene
 end
 
+function retunMaxInnovation(gene)
+maxInnovation = gene[1].innovation
+for i = 1, #gene do
+  if gene[i].innovation > maxInnovation then
+  maxInnovation = gene[i].innovation
+  end
+end
+
+return maxInnovation
+end
+
 
 function mutateNodeGene(gene)
 --pick a random node/neuron/connection gene
+--max innovation
+maxInnovation = retunMaxInnovation(gene)
+print("max innovation"..maxInnovation)
+print("Initial length of gene: "..#gene)
 genepos = math.random(1,#gene)
+print("selected random pos for mutation point"..genepos)
 node1 = gene[genepos]
-
-
+print(" point to be mutated input".. node1.input)
+print(" point to be mutated output".. node1.out)
 --disable gene
 node1.status = false
 
 --put it back
 
 gene[genepos] = node1
-
-print("node1 in: "..node1.input)
+print("Length check after putting it back: "..#gene)
+--print("Original innovation"..node1.innovation)
 --node one in to new connection to new neuron
 
 connectionGeneMutate1 = connectionGene()
 
 connectionGeneMutate1.input = node1.input
-connectionGeneMutate1.innovation = node1.innovation + 1
---connectionGeneMutate1.output = a(i*w)?
---add neuron to a table
-incrementneurons = #neurons + 1
-neurons[incrementneurons] = math.random()
-connectionGeneMutate1.output = neurons[incrementneurons]
+print("new connection gene input: "..connectionGeneMutate1.input)
+connectionGeneMutate1.innovation = maxInnovation + 1
+print("new connection gene innovation: "..connectionGeneMutate1.innovation)
+table.insert(neurons,math.random(60,200))
+connectionGeneMutate1.out = neurons[#neurons]
+print("new connection gene output"..connectionGeneMutate1.out)
 table.insert(gene,connectionGeneMutate1)
 
-connectionGeneMutate2 = connectionGene()
-connectionGeneMutate2.input = connectionGeneMutate1.out
-connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
+print("Gene length after adding a new connection and gene: "..#gene)
 
---connectionGeneMutate2.output = a(i*w)?
+connectionGeneMutate2 = connectionGene()
+connectionGeneMutate2.input = neurons[#neurons]
+print("new 2nd connection gene input: "..connectionGeneMutate2.input)
+connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
+print("new 2nd connection gene innovation: "..connectionGeneMutate2.innovation)
 connectionGeneMutate2.out = node1.out
+print("new 2nd connection gene out: "..connectionGeneMutate2.out)
 table.insert(gene,connectionGeneMutate2)
+
+print("Gene length after adding a final connection and gene: "..#gene)
 
 return gene
 end
@@ -279,11 +301,6 @@ end
 
 
 
-
-
-
-
-
 function species(genes)
 
 speciesPool = {}
@@ -292,15 +309,101 @@ return speciesPool
 end
 
 
+--2 mutations therefore the network grew by a size of 2 (total 7)
+
+
+xArr = {}
+yArr = {}
+
+dpoints = #inputs + #outputs + #neurons
+--dInputs = #inputs
+--dOutput = #outputs
+--dNeurons= #neurons
+
+
+
+math.randomseed(os.time())
+for i = 1, dpoints do
+  table.insert(xArr,math.random(1,50)* 10)
+  --print("Value: "..xArr[i])
+end
+
+for i = 1, dpoints do
+  table.insert(yArr,math.random(1,100) * 3)
+  --print("Value: "..yArr[i])
+end
+--xpos = math.random(20,100)
+--draw 5 neurons in 5 random places
+function drawLine(x1,y1,x2,y2)
+
+  end
+
+--love.graphics.line( x1, y1, x2, y2,)
+xInputArr = {}
+yInputArr = {}
+--for i = 1, dInputs do
+ -- table.insert(xInputArr,math.random(20,100)* 5 )
+--  table.insert(yInputArr,math.random(20,100) * 3)
+--  end
+
+inputsX = {}
+inputsY = {}
+inputsObtained = {}
+inputMonitor = 1
+
+
+--search for neurons and assign a "draw"
+
+nv = #inputs + #neurons
+
+countNodes = 1
+for i = 1,#inputs do
+  table.insert(inputsObtained,inputs[i])
+  table.insert(inputsX,xArr[countNodes])
+  table.insert(inputsY,xArr[countNodes])
+  inputsX[countNodes] = xArr[countNodes]
+  inputsY[countNodes] = yArr[countNodes]
+  countNodes = countNodes + 1
+end
+for i = 1, #neurons do
+  table.insert(inputsObtained,neurons[i])
+  table.insert(inputsX,xArr[countNodes])
+  table.insert(inputsY,xArr[countNodes])
+  inputsX[countNodes] = xArr[countNodes]
+  inputsY[countNodes] = yArr[countNodes]
+  countNodes = countNodes + 1
+end
+for i = 1, #outputs do
+  table.insert(inputsObtained,outputs[i])
+  table.insert(inputsX,xArr[countNodes])
+  table.insert(inputsY,xArr[countNodes])
+  inputsX[countNodes] = xArr[countNodes]
+  inputsY[countNodes] = yArr[countNodes]
+  countNodes = countNodes + 1
+end
+
+
+--love.graphics.line( x1, y1, x2, y2)
+
+print("number of values " ..countNodes)
+
+
+
+
+
+--print(""..neurons[2])
+--print("number of yval " ..y[5].input)
+
 x = newGenome()
 y = mutateNodeGene(x)
-
-
-print("number is "..#inputs)
-print(x[2].weight)
-print(#neurons)
-print(y[5].innovation)
-print(neurons[2])
+y = mutateNodeGene(y)
+y = mutateNodeGene(y)
+y = mutateConnectionGene(y)
+--
+for i=1,#y do
+print("in"..y[i].input)
+print("out"..y[i].out)
+end
 
 
 
