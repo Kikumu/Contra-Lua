@@ -647,7 +647,6 @@ testPropagate1 = BuildNetwork(testPropagate1)
 
 
 
- --WEIGHT INDEXES AREE FOUND IN NEURONS U DUMBASS
 
 --  function newNeuron()
 --	local neuron = {}
