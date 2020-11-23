@@ -6,6 +6,7 @@ selectionChance = 0.3 --this value is used to choose between 2 connection genes 
 disjointment = 0.2 --c1
 excessGenes = 0.3 --c2
 weightImportance = 0.1 --c3
+MaxNodes = 11
 
 --E is number of disjointed connection genes
 --D is number of excess connection genes
@@ -420,6 +421,7 @@ print("number of values " ..countNodes)
 
 
 
+
 --print(""..neurons[2])
 --print("number of yval " ..y[5].input)
 geneCluster = {}
@@ -459,14 +461,82 @@ print("in"..z[i].input)
 print("out"..z[i].out)
 end
 
-function genomeClusterEvaluater(genome)
+--neurons should match with innovation number
+--this is my new 'newGenome' function
+function createNewGenome()
   genomeCluster = {} --holds the gene information network
-  genomeCluster.genes = {}
+  genomeCluster.genes = {} --weight info (connection genes info)
   genomeCluster.fitness = 0
+  genomeCluster.network = {} --holds neurons
+  return genomeCluster
   end
-testPropagate = newGenome()
+--testPropagate = newGenome()
 --try and forward propagate testPropagate
 --find all connected lines and
-for i = 1, #testPropagate do
 
+ function newNeuron()
+	local neuron = {}
+	neuron.incoming = {} --data from previous thingis
+	neuron.value = 0.0 -- current neuron value
+	return neuron
+end
+
+ testPropagate = createNewGenome()
+
+--gene.input = 0
+--gene.out = 0
+--gene.weight = math.random()
+--gene.status = true
+--gene.innovation = 0 --ancestry monitor
+
+ function createNetwork(genome)
+  local network = {}
+	network.neurons = {}
+  network.weights = {}
+	print("network size initial value"..#network.neurons)
+
+  --add neurons(create or direct inputs)
+	for i=1,#inputs do
+    tempN = newNeuron()
+    tempN.value = math.random(200,300)
+    table.insert(network.neurons,tempN)
+		network.neurons[i] = tempN
+   -- print("neuron input value: "..network.neurons[i].value)
+	end
+
+	--create outputs
+	for o=1,#outputs do
+    tempO = newNeuron()
+    tempO.value =  math.random(500,800)
+    table.insert(network.neurons,tempO)
+		network.neurons[MaxNodes+o] = tempO
+    -- print("neuron output value: "..network.neurons[o].value)
+	end
+
+
+  print("network size after adding inputs and outputs value"..#network.neurons)
+  --add neurons to genome network
+  for i = 1, #network.neurons do
+    table.insert(genome.network,network.neurons[i])
   end
+
+  --create connection gene to match inputs index just for the output
+  for i = 1, #inputs do
+    connN = connectionGene()
+    connN.input = genome.network[i].value
+    connN.out = network.neurons[MaxNodes+1]
+    table.insert(network.weights,connN)
+    end
+
+  --copy the connection genes
+  for i = 1, #network.weights do
+    table.insert(genome.genes,network.weights[i])
+    end
+
+  return genome
+end
+
+ testPropagate = createNetwork(testPropagate)
+ --print("gene value"..testPropagate.network[2].value)
+ --print("gene out value"..testPropagate.genes[2].out.value)
+ --I want to find out how many weight values are attatched to me
