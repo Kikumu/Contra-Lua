@@ -26,7 +26,7 @@ TO DO:
 4) Find a way to keep track of the fitness of each genome --done
 5) Create function to organise a group of genes into different speciesPool
 6) Rework how the network breeds
-7) Some polish I guess
+7) Fix how genes mutate --done
 
 
 ]]
@@ -69,12 +69,13 @@ end
 --a((i*w) + (i*w) + (i*w))
 
 
---tested(needs reviewing)
-function mutateConnectionGene(gene)
+--tested(needs reviewing) --TESTED AND REWORKED
+function mutateConnectionGene(genome)
 --take 2 random nodes and adds a connection between them if none are available
-max = retunMaxInnovation(gene)
-node1 = gene[math.random(1,#gene)]
-node2 = gene[math.random(1,#gene)]
+max = retunMaxInnovation(genome)
+print("max val in connection gene"..max)
+node1 = genome.genes[math.random(1,#genome.genes)]
+node2 = genome.genes[math.random(1,#genome.genes)]
 --print ('Node 1 '..node1.weight)
 --print ('Node 2 '..node2.weight)
 state1 = 0
@@ -93,14 +94,15 @@ end
 if state1 == 1 and state2 == 1 then
 connectionGeneMutate1 = connectionGene()
 connectionGeneMutate1.input = node1.input
+--add connection to neuron
 connectionGeneMutate1.innovation = max + 1
+table.insert(connectionGeneMutate1.input.weightIndex,connectionGeneMutate1.innovation)
 connectionGeneMutate1.out = node2.input
---connectionGeneMutate1.output = a(i*w)?
+--add connection to neuron at gene out
+table.insert(connectionGeneMutate1.out.weightIndex,connectionGeneMutate1.innovation)
 print("a gene has been mutated by connection")
-connectionGeneMutate1.out= node2.input
-table.insert(gene,connectionGeneMutate1)
-
-return gene
+table.insert(genome,connectionGeneMutate1)
+return genome
 end
 
 --if state2 == 1 then
@@ -112,7 +114,7 @@ print('state2: '..state2)
 return gene
 end
 
-
+--TESTED AND REWORED
 function retunMaxInnovation(gene)
 maxInnovation = gene.genes[1].innovation
 print("Max Innovation: "..maxInnovation)
@@ -126,7 +128,7 @@ end
 return maxInnovation
 end
 
-
+--FULLY REWORKED
 function mutateNodeGene(genome)
 --pick a random node/neuron/connection gene
 --max innovation
@@ -163,7 +165,7 @@ print("new connection gene innovation: "..connectionGeneMutate1.innovation)
 print("number of neurons in my gene"..#genome.network)
 --create a neuron and put into network
 tempNeuron = newNeuron()
-tempNeuron.value = math.random(60,200)
+tempNeuron.value = math.random()
 --add weight index
 table.insert(tempNeuron.weightIndex,connectionGeneMutate1.innovation)
 --tempNeuron.weightIndex = connectionGeneMutate1.innovation
@@ -197,71 +199,83 @@ end
 
 
 
---for crossover purposes(Goal is to add to g1)tested
-function matchingGenes(g1,g2)
+--for crossover purposes(Goal is to add to g1)tested--TESTED AND REWORKED
+function matchingGenes(genome1,genome2)
 matchedGenes ={}
-g1Length = #g1
-g2Length = #g2
+g1Length = #genome1.genes
+g2Length = #genome2.genes
 
+--check innovations. if innovations match, add to bucket
 for i = 1, g1Length do
 for j = 1, g2Length do
-if g1[i].innovation == g2[j].innovation then
+if genome1.genes[i].innovation == genome2.genes[j].innovation then
 if selectionChance > math.random() then
-table.insert(matchedGenes,g1[i])
+table.insert(matchedGenes,genome1.genes[i])
+print("picked a "..j)
 else
-table.insert(matchedGenes,g2[j])
+table.insert(matchedGenes,genome2.genes[j])
+print("picked b "..j)
 end
 end
 end
 end
-
+--return matched genes containing the same innovation number(some may be active or inactive)
 return matchedGenes
 end
 
 
 --(takes disjointed genes from g2), goal is to add to G1
-function disjointGenes(g1,g2)
+--the genes in the middle
+function disjointGenes(genome1,genome2)
 
 --pick max innovation number from g1 asnd g2
 maxInnovation = 0
 disjointedGenes = {}
-g2MaxInnovation = retunMaxInnovation(g2)
-g1MaxInnovation = retunMaxInnovation(g1)
-g2Length = #g2
-g1Length = #g1
+g2MaxInnovation = retunMaxInnovation(genome2)
+g1MaxInnovation = retunMaxInnovation(genome1)
+g2Length = #genome2
+g1Length = #genome1
 
-found = 0
-for i = 1, #g2 do
-  for j = 1, #g1 do
-    if g1[j].innovation < g2MaxInnovation then
-    if g2[i].innovation == g1[j].innovation then
+found = 0 --checks if connection gene is found in the thing or not
+addLimiter = 0 --prevents adding of excess genes 1 add 0 dont add
+--finding disjointed genes in g2
+for i = 1, #genome2 do
+  found = 0
+  addLimiter = 0
+  for j = 1, #genome1 do
+    if genome1.genes[j].innovation < g2MaxInnovation then
+      --if they are equal, matching gene found which is not what we want so nothing is saved
+      addLimiter = 1 --add to disjointed at end if nothing is found
+    if genome2.genes[i].innovation == genome1.genes[j].innovation then
       found = 1
     end
   end
-if found == 0 then
-table.insert(disjointedGenes,g2[i])
-end
-    end
 
+    end
+   if found == 0 and  addLimiter == 1 then
+    table.insert(disjointedGenes,genome2.genes[i])
+  end
 end
 return disjointedGenes
-
 end
 
 
 --confident(tested)
-function excessGenes(g1,g2)
+function excessGenes(genome1,genome2)
 ExcessGenesTable = {}
 --find excess genes in g2(which are located in g1)
-maxInnovationg1 = g1[#g1].innovation
-maxInnovationg2 = g2[#g2].innovation
-g1Length = #g1
-g2Length = #g2
+maxInnovationg1 =retunMaxInnovation(genome1)
+print("max innovation in g1 in excess genes monitor"..maxInnovationg1)
+maxInnovationg2 = retunMaxInnovation(genome2)
+print("max innovation in g2 in excess genes monitor"..maxInnovationg2)
+g1Length = #genome1.genes
+g2Length = #genome2.genes
 
 if maxInnovationg1 > maxInnovationg2 then
 for i = 1, g1Length do
-if g1[i].innovation > maxInnovationg2 then
-table.insert(ExcessGenesTable, g1[i])
+if genome1.genes[i].innovation > maxInnovationg2 then
+--assumes g1 is fitter gene
+table.insert(ExcessGenesTable, genome1.genes[i])
 end
 end
 return ExcessGenesTable
@@ -269,8 +283,9 @@ end
 
 if maxInnovationg2 > maxInnovationg1 then
 for i = 1, g2Length do
-if g2[i].innovation > maxInnovationg1 then
-table.insert(ExcessGenesTable, g2[i])
+if genome2.genes[i].innovation > maxInnovationg1 then
+  --assumes g2 is fitter gene
+table.insert(ExcessGenesTable, genome2.genes[i])
 end
 end
 end
@@ -373,6 +388,7 @@ end
 --gene.status = true
 --gene.innovation = 0 --ancestry monitor
 
+--you only need to do this ONCE
  function BuildNetwork(genome)
 	print("network size initial value"..#genome.network)
 
@@ -380,7 +396,7 @@ end
   --add neurons(create or direct inputs)
 	for i=1,#inputs do
     tempN = newNeuron()
-    tempN.value = math.random(200,300)
+    tempN.value = math.random()
 
     --create gene and link innovation number
     tempConnectionGene = connectionGene()
@@ -406,7 +422,7 @@ end
 	--create outputs
 	for o=1,#outputs do
     tempO = newNeuron()
-    tempO.value =  math.random(500,800)
+    tempO.value =  math.random()
     --loop through genes and link all "outs" to this output
     for i = 1, #genome.genes do
 
@@ -509,28 +525,58 @@ function evaluateNetwork(genome)
     end
     print("new genome value".. genome.network[i].value)
   end
-  end
+end
+
+--only need ti create and build once per genome
  testPropagate = createNewGenome()
+ testPropagate1 = createNewGenome()
+ --testPropagate2 = createNewGenome()
+testPropagate = BuildNetwork(testPropagate)
+testPropagate1 = BuildNetwork(testPropagate1)
 
- testPropagate = BuildNetwork(testPropagate)
+ --f_to_pay_respects = evaluateNetwork(testPropagate)
 
- f_to_pay_respects = evaluateNetwork(testPropagate)
+ mutateNodeGene(testPropagate)
+ mutateNodeGene(testPropagate)
+ mutateNodeGene(testPropagate)
+ mutateNodeGene(testPropagate1)
+ mutateNodeGene(testPropagate1)
+ mutateConnectionGene(testPropagate1)
+ mutateConnectionGene(testPropagate1)
 
-  mutateNodeGene(testPropagate)
+  --evaluateNetwork(testPropagate)
 
-  evaluateNetwork(testPropagate)
+ -- mutateConnectionGene(testPropagate)
+ -- mutateNodeGene(testPropagate)
+ -- mutateNodeGene(testPropagate1)
 
-  mutateNodeGene(testPropagate)
+  x = matchingGenes(testPropagate,testPropagate1)
+  y = disjointGenes(testPropagate,testPropagate1)
+  z = excessGenes(testPropagate,testPropagate1)
+ print("size of matched genes: "..#x)
+ print("size of disjointed genes: "..#y)
+ print("size of excess genes: "..#z)
+ print("size of a: "..#testPropagate.genes)
+ print("size of b: "..#testPropagate1.genes)
+  --evaluateNetwork(testPropagate)
 
-  mutateNodeGene(testPropagate)
+  --mutateConnectionGene(testPropagate)
 
-  evaluateNetwork(testPropagate)
+  --evaluateNetwork(testPropagate)
+  --breeding
+  -- for i = 1, #testPropagate1.genes do
+  -- print("match1 in: "..testPropagate1.genes[i].input.value)
+  -- print("match1 out: "..testPropagate1.genes[i].out.value)
+  -- print("match1 innovation: "..testPropagate1.genes[i].innovation)
+   --print("match1 status: "..tostring(testPropagate1.genes[i].status))
+   --end
 
- for i = 1, #testPropagate.genes do
-   print("in: "..testPropagate.genes[i].input.value)
-   print("out: "..testPropagate.genes[i].out.value)
-   print("status: "..tostring(testPropagate.genes[i].status))
-   end
+ --for i = 1, #testPropagate.genes do
+  -- print("match2 in: "..testPropagate.genes[i].input.value)
+  -- print("match2 out: "..testPropagate.genes[i].out.value)
+  -- print("match2 innovation: "..testPropagate.genes[i].innovation)
+  -- print("match2 status: "..tostring(testPropagate.genes[i].status))
+  -- end
  --f_to_pay_respects = evaluateNetwork(testPropagate)
  --print("gene value"..testPropagate.network[2].value)
  --print("gene out value"..testPropagate.genes[2].out.value)
