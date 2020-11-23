@@ -25,6 +25,9 @@ TO DO:
 3) Neurons holder for each network created --DONE
 4) Find a way to keep track of the fitness of each genome --done
 5) Create function to organise a group of genes into different speciesPool
+6) Rework how the network breeds
+7) Some polish I guess
+
 
 ]]
 
@@ -66,28 +69,7 @@ end
 --a((i*w) + (i*w) + (i*w))
 
 
-
---FIND A WAY TO RESTRUCTURE THE WAY OU START CREATING YOUR GENES. FROM CURRENT SPECULATION, THE POPULATION CREATION WORKS ALONGSIDE ALL THESE FACTORS TO CREATE DIFFERENT SPECIES (HENCE SPECIES POOL WITHIN THE POPULATION)
-function newGenome() --just creates starting pop, a single genome
-
-innovationGene = 0
-newGeneOut = {}
-
-for i = 1,#inputs do
-parentgene = connectionGene()
-parentgene.input = inputs[i]
-parentgene.innovation = innovationGene
-parentgene.out = outputs[1]
-table.insert(newGeneOut,i,parentgene)
-innovationGene = innovationGene + 1
-end
-
-return newGeneOut
-
-end
-
-
---tested
+--tested(needs reviewing)
 function mutateConnectionGene(gene)
 --take 2 random nodes and adds a connection between them if none are available
 max = retunMaxInnovation(gene)
@@ -130,11 +112,14 @@ print('state2: '..state2)
 return gene
 end
 
+
 function retunMaxInnovation(gene)
-maxInnovation = gene[1].innovation
-for i = 1, #gene do
-  if gene[i].innovation > maxInnovation then
-  maxInnovation = gene[i].innovation
+maxInnovation = gene.genes[1].innovation
+print("Max Innovation: "..maxInnovation)
+for i = 1, #gene.genes do
+  if gene.genes[i].innovation > maxInnovation then
+  print("looping innovation in genes.."..gene.genes[i].innovation)
+  maxInnovation = gene.genes[i].innovation
   end
 end
 
@@ -142,24 +127,23 @@ return maxInnovation
 end
 
 
-function mutateNodeGene(gene)
+function mutateNodeGene(genome)
 --pick a random node/neuron/connection gene
 --max innovation
-maxInnovation = retunMaxInnovation(gene)
+maxInnovation = retunMaxInnovation(genome)
 print("max innovation"..maxInnovation)
-print("Initial length of gene: "..#gene)
-genepos = math.random(1,#gene)
+print("Initial length of gene: "..#genome.genes)
+genepos = math.random(1,#gene.genes)
 print("selected random pos for mutation point"..genepos)
-node1 = gene[genepos]
+node1 = genome.genes[genepos]
 print(" point to be mutated input".. node1.input)
-print(" point to be mutated output".. node1.out)
+print(" point to be mutated output".. node1.out.value)
 --disable gene
 node1.status = false
-
 --put it back
 
-gene[genepos] = node1
-print("Length check after putting it back: "..#gene)
+genome.genes[genepos] = node1
+print("Length check after putting it back: "..#genome.genes)
 --print("Original innovation"..node1.innovation)
 --node one in to new connection to new neuron
 
@@ -169,21 +153,26 @@ connectionGeneMutate1.input = node1.input
 print("new connection gene input: "..connectionGeneMutate1.input)
 connectionGeneMutate1.innovation = maxInnovation + 1
 print("new connection gene innovation: "..connectionGeneMutate1.innovation)
-table.insert(neurons,math.random(60,200))
-connectionGeneMutate1.out = neurons[#neurons]
-print("new connection gene output"..connectionGeneMutate1.out)
-table.insert(gene,connectionGeneMutate1)
+print("number of neurons in my gene"..#genome.genes.network)
+--create a neuron and put into network
+tempNeuron = newNeuron()
+tempNeuron.value = math.random(60,200)
+tempNeuron.weightIndex = connectionGeneMutate1.innovation
+table.insert(genome.genes.network,tempNeuron)
+connectionGeneMutate1.out = tempNeuron
+print("new connection gene output"..connectionGeneMutate1.out.value)
+table.insert(genome.genes,connectionGeneMutate1)
 
-print("Gene length after adding a new connection and gene: "..#gene)
+print("Gene length after adding a new connection and gene: "..#genome.genes)
 
 connectionGeneMutate2 = connectionGene()
-connectionGeneMutate2.input = neurons[#neurons]
-print("new 2nd connection gene input: "..connectionGeneMutate2.input)
+connectionGeneMutate2.input = genome.genes.network[#genome.genes.network]
+print("new 2nd connection gene input: "..connectionGeneMutate2.input.value)
 connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
 print("new 2nd connection gene innovation: "..connectionGeneMutate2.innovation)
 connectionGeneMutate2.out = node1.out
 print("new 2nd connection gene out: "..connectionGeneMutate2.out)
-table.insert(gene,connectionGeneMutate2)
+table.insert(genome.genes,connectionGeneMutate2)
 
 print("Gene length after adding a final connection and gene: "..#gene)
 
@@ -339,136 +328,6 @@ speciesPool = {}
 return speciesPool
 end
 
-
---2 mutations therefore the network grew by a size of 2 (total 7)
-
-
-xArr = {}
-yArr = {}
-
-dpoints = #inputs + #outputs + #neurons
---dInputs = #inputs
---dOutput = #outputs
---dNeurons= #neurons
-
-
-
-math.randomseed(os.time())
-for i = 1, dpoints do
-  table.insert(xArr,math.random(1,50)* 10)
-  --print("Value: "..xArr[i])
-end
-
-for i = 1, dpoints do
-  table.insert(yArr,math.random(1,100) * 3)
-  --print("Value: "..yArr[i])
-end
---xpos = math.random(20,100)
---draw 5 neurons in 5 random places
-function drawLine(x1,y1,x2,y2)
-
-  end
-
---love.graphics.line( x1, y1, x2, y2,)
-xInputArr = {}
-yInputArr = {}
---for i = 1, dInputs do
- -- table.insert(xInputArr,math.random(20,100)* 5 )
---  table.insert(yInputArr,math.random(20,100) * 3)
---  end
-
-inputsX = {}
-inputsY = {}
-inputsObtained = {}
-inputMonitor = 1
-
-
---search for neurons and assign a "draw"
-
-nv = #inputs + #neurons
-
-countNodes = 1
-for i = 1,#inputs do
-  table.insert(inputsObtained,inputs[i])
-  table.insert(inputsX,xArr[countNodes])
-  table.insert(inputsY,xArr[countNodes])
-  inputsX[countNodes] = xArr[countNodes]
-  inputsY[countNodes] = yArr[countNodes]
-  countNodes = countNodes + 1
-end
-for i = 1, #neurons do
-  table.insert(inputsObtained,neurons[i])
-  table.insert(inputsX,xArr[countNodes])
-  table.insert(inputsY,xArr[countNodes])
-  inputsX[countNodes] = xArr[countNodes]
-  inputsY[countNodes] = yArr[countNodes]
-  countNodes = countNodes + 1
-end
-for i = 1, #outputs do
-  table.insert(inputsObtained,outputs[i])
-  table.insert(inputsX,xArr[countNodes])
-  table.insert(inputsY,xArr[countNodes])
-  inputsX[countNodes] = xArr[countNodes]
-  inputsY[countNodes] = yArr[countNodes]
-  countNodes = countNodes + 1
-end
-
-
---love.graphics.line( x1, y1, x2, y2)
-
-print("number of values " ..countNodes)
-function love.draw()
-  for i = 1, nv do
-    love.graphics.setColor(1, 0.5, 1)
-    love.graphics.circle("fill", xArr[i], yArr[i], 10, 100) -- Draw white circle with 100 segments.
-    love.graphics.setColor(0, 1, 0.3, 1)
-    love.graphics.print(""..inputsObtained[i], inputsX[i], inputsY[i])
-    --love.graphics.line( x1, y1, x2, y2)
-  end
-end
-
-
-
-
---print(""..neurons[2])
---print("number of yval " ..y[5].input)
-geneCluster = {}
-x = newGenome()
-mutateNodeGene(x)
-mutateNodeGene(x)
-
-y = newGenome()
-mutateNodeGene(y)
-mutateConnectionGene(y)
-
---
-table.insert(geneCluster,x)
-table.insert(geneCluster,y)
-
-print("gene cluster "..#geneCluster)
-z = crossover(geneCluster)
-
-for i=1,#x do
-print("in"..x[i].input)
-print("out"..x[i].out)
-end
-print("gene 1 "..#x)
---print("gene 2 "..#y)
-for i=1,#y do
-print("in"..y[i].input)
-print("out"..y[i].out)
-end
-print("gene 2 "..#y)
-print("gene 3 "..#z)
---a = matchingGenes(x,y)
---a = excessGenes(x,y)
---a = disjointGenes(x,y)
-print("number of genes in child"..#z)
-for i=1,#z do
-print("in"..z[i].input)
-print("out"..z[i].out)
-end
-
 --neurons should match with innovation number
 --this is my new 'newGenome' function
 function createNewGenome()
@@ -485,7 +344,7 @@ function createNewGenome()
 
  function newNeuron()
 	local neuron = {}
-  neuron.weightIndex = {} --keeps track of attatched weights (matches with node array index
+  neuron.weightIndex = {} --stores innovation number of the connection gene its connected to
   neuron.inStatus = {} --0 if an input 1 if an output (matches with node array index
 	neuron.incoming = {} --data from previous thingis
 	neuron.value = 0.0 -- current neuron value
@@ -498,56 +357,56 @@ end
 --gene.status = true
 --gene.innovation = 0 --ancestry monitor
 
- function createNewNetwork(genome)
-  local network = {}
-	network.neurons = {} --previous inputs (and weights mabe)?
-  network.weights = {}
-  network.weightIndex = {}
-	print("network size initial value"..#network.neurons)
+ function BuildNetwork(genome)
+	print("network size initial value"..#genome.network)
 
-  weightTracker = 1
+  innovationNumber = 1
   --add neurons(create or direct inputs)
 	for i=1,#inputs do
     tempN = newNeuron()
     tempN.value = math.random(200,300)
-    table.insert(tempN.weightIndex,weightTracker) --stores tracker to neuron
-    table.insert(network.neurons,tempN)
-		network.neurons[i] = tempN
-    table.insert(network.weightIndex,weightTracker)
-    weightTracker = weightTracker + 1
+
+    --create gene and link innovation number
+    tempConnectionGene = connectionGene()
+    tempConnectionGene.input = tempN
+    tempConnectionGene.innovation = innovationNumber
+    --link neuron
+    table.insert(tempN.weightIndex,innovationNumber)
+    --remember--output of this gene is nil...for now..
+    --insert connection gene back 2 de genome
+    table.insert(genome.genes,tempConnectionGene)
+    --table.insert(network.neurons,tempN)
+    --add to genomee network
+    table.insert(genome.network,tempN)
+    innovationNumber = innovationNumber + 1
    -- print("neuron input value: "..network.neurons[i].value)
 	end
+
+  --if #genome.network > #inputs + #outputs then
+  --remember weight index in neuron links to innovation number of gene
+   -- end
+
 
 	--create outputs
 	for o=1,#outputs do
     tempO = newNeuron()
     tempO.value =  math.random(500,800)
-    tempO.weightIndex = network.weightIndex
-    table.insert(network.neurons,tempO)
-		network.neurons[MaxNodes+o] = tempO
+    --loop through genes and link all "outs" to this output
+    for i = 1, #genome.genes do
+
+      --link neuron to genes through innovation number in genes
+      table.insert(tempO.weightIndex,genome.genes[i].innovation)
+      genome.genes[i].out = tempO
+      --print("gene input xd: "..genome.genes[i].input.value)
+      --print("gene output xd: "..genome.genes[i].out.value)
+      end
+    --add neuron to network
+    table.insert(genome.network,tempO)
     -- print("neuron output value: "..network.neurons[o].value)
 	end
 
 
-  print("network size after adding inputs and outputs value"..#network.neurons)
-  --add neurons to genome network
-  for i = 1, #network.neurons do
-    table.insert(genome.network,network.neurons[i])
-  end
-
-  --create connection gene to match inputs index just for the output
-  for i = 1, #inputs do
-    connN = connectionGene()
-    connN.input = genome.network[i].value
-    connN.out = network.neurons[MaxNodes+1]
-    table.insert(network.weights,connN)
-    end
-
-  --copy the connection genes
-  for i = 1, #network.weights do
-    table.insert(genome.genes,network.weights[i])
-    end
-
+  print("network size after adding inputs and outputs value"..#genome.network)
   return genome
 end
 
@@ -555,25 +414,27 @@ end
 function evaluateNetwork(genome)
   --obtain all connections to a node and shit out output
   for i = 1, #genome.network do
-    tempW = {} --all associated
+    tempW = {} --all associated (according to innovation numbers)
     tempWout = {} --just the outs
-    oldValue = genome.network[i].value
+    oldValue = genome.network[i] --old neuron data
     --update node AND gene
     --obtain node value
     --TempNode = genome.network[i]
-    print("genome network neuron " ..genome.network[i].value)
-    print("weight index values " ..#genome.network[i].weightIndex)
+    print("genome network neuron old::  " ..genome.network[i].value)
+    print("weight index values " ..#genome.network[i].weightIndex) --how many innovation numbers are in here
     --obtain weights through index
     for j = 1, #genome.network[i].weightIndex do
-      --grab index and loop through network weights to check if its there
+      --grab innovation number and loop through network weights to check if  there is a match
       tempWeightIndx = genome.network[i].weightIndex[j]
-      print("weight index to look for"..tempWeightIndx)
+      print("innovation number to look for"..tempWeightIndx)
       for k = 1, #genome.genes do
-        if tempWeightIndx == k then
+        --if innovation number of neuron is equal to innovation number of connection gene
+        if tempWeightIndx == genome.genes[k].innovation then
           --clear a table: for k,v in pairs(tab) do tab[k]=nil end
           --add to tempW
-          print("Associated gene in"..genome.genes[k].input)
+          print("Associated gene in"..genome.genes[k].input.value)
           print("Associated gene in"..genome.genes[k].out.value)
+          --add to tempW(all ins and outs connection genes)
           table.insert(tempW,genome.genes[k])--this will now hold all associated connection genes
           end
         end
@@ -584,7 +445,9 @@ function evaluateNetwork(genome)
         print("gene status: "..tostring(tempW[b].status))
         print("gene out: "..tempW[b].out.value)
         print("network out: "..genome.network[i].value)
-        if tempW[b].out.value == genome.network[i].value and tempW[b].status == true then
+        if tempW[b].out== genome.network[i] and tempW[b].status == true then
+          print("matched actual neurons")
+          --now grab gene and store it
           table.insert(tempWout, tempW[b])
         end
     end
@@ -593,8 +456,8 @@ function evaluateNetwork(genome)
     sum = 0
     activation = 0
     for m = 1, #tempWout do
-      print("input value from filtered "..tempWout[m].input)
-      sum = sum + (tempWout[m].input * tempWout[m].weight)
+      print("input value from filtered "..tempWout[m].input.value)
+      sum = sum + (tempWout[m].input.value * tempWout[m].weight)
     end
     if sum~=0 then
       print("activated")
@@ -609,16 +472,16 @@ function evaluateNetwork(genome)
       for p = 1, #tempWout do
         for q = 1, #genome.genes do
           --if same innovation number and same output
-          if genome.genes[q].innovation == tempWout[p].innovation and genome.genes[q].out.value == oldValue then
+          if genome.genes[q].innovation == tempWout[p].innovation and genome.genes[q].out == oldValue then
             print("previous "..genome.genes[q].out.value)
             genome.genes[q]= tempWout[p]
             print("current "..genome.genes[q].out.value)
           end
           --if same innovation number and same input
           if genome.genes[q].innovation == tempWout[p].innovation and genome.genes[q].input == oldValue then
-            print("previous "..genome.genes[q].input)
+            print("previous "..genome.genes[q].input.value)
             genome.genes[q]= tempWout[p]
-            print("current "..genome.genes[q].input)
+            print("current "..genome.genes[q].input.value)
           end
 
           end
@@ -629,7 +492,11 @@ function evaluateNetwork(genome)
   end
   end
  testPropagate = createNewGenome()
- testPropagate = createNewNetwork(testPropagate)
+
+ testPropagate = BuildNetwork(testPropagate)
+
+ --testPropagate = mutateNodeGene(testPropagate)
+
  f_to_pay_respects = evaluateNetwork(testPropagate)
  --print("gene value"..testPropagate.network[2].value)
  --print("gene out value"..testPropagate.genes[2].out.value)
@@ -637,6 +504,7 @@ function evaluateNetwork(genome)
 
 
 
+ --WEIGHT INDEXES AREE FOUND IN NEURONS U DUMBASS
 
 --  function newNeuron()
 --	local neuron = {}
