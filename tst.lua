@@ -130,52 +130,68 @@ end
 function mutateNodeGene(genome)
 --pick a random node/neuron/connection gene
 --max innovation
+tstval = #genome.genes
 maxInnovation = retunMaxInnovation(genome)
 print("max innovation"..maxInnovation)
 print("Initial length of gene: "..#genome.genes)
-genepos = math.random(1,#gene.genes)
+genepos = math.random(1,#genome.genes)
 print("selected random pos for mutation point"..genepos)
-node1 = genome.genes[genepos]
-print(" point to be mutated input".. node1.input)
-print(" point to be mutated output".. node1.out.value)
+connectionGeneTemp = genome.genes[genepos]
+print("gene connection gene status: "..tostring(genome.genes[genepos].status))
+print(" neuron point value to be mutated input".. connectionGeneTemp.input.value)
+print(" neuron point value to be mutated output".. connectionGeneTemp.out.value)
 --disable gene
-node1.status = false
+connectionGeneTemp.status = false
+print("Temp connection gene status: "..tostring(connectionGeneTemp.status))
+print("gene connection gene status: "..tostring(genome.genes[genepos].status))
 --put it back
-
-genome.genes[genepos] = node1
-print("Length check after putting it back: "..#genome.genes)
+--genome.genes[genepos] = connectionGeneTemp (no need i guess)...
+--print("Length check after putting it back: "..#genome.genes)
 --print("Original innovation"..node1.innovation)
 --node one in to new connection to new neuron
 
+--crate new connection
 connectionGeneMutate1 = connectionGene()
-
-connectionGeneMutate1.input = node1.input
-print("new connection gene input: "..connectionGeneMutate1.input)
+connectionGeneMutate1.input = connectionGeneTemp.input --attatch neuron
+print("new connection gene input: "..connectionGeneMutate1.input.value)
 connectionGeneMutate1.innovation = maxInnovation + 1
+--add gene innovation number to neuron of input
+table.insert(connectionGeneMutate1.input.weightIndex,connectionGeneMutate1.innovation)
+print("number of values in this neurons index"..#connectionGeneMutate1.input.weightIndex)
+
 print("new connection gene innovation: "..connectionGeneMutate1.innovation)
-print("number of neurons in my gene"..#genome.genes.network)
+print("number of neurons in my gene"..#genome.network)
 --create a neuron and put into network
 tempNeuron = newNeuron()
 tempNeuron.value = math.random(60,200)
-tempNeuron.weightIndex = connectionGeneMutate1.innovation
-table.insert(genome.genes.network,tempNeuron)
+--add weight index
+table.insert(tempNeuron.weightIndex,connectionGeneMutate1.innovation)
+--tempNeuron.weightIndex = connectionGeneMutate1.innovation
 connectionGeneMutate1.out = tempNeuron
+--add neuron to network
+table.insert(genome.network,tempNeuron)
 print("new connection gene output"..connectionGeneMutate1.out.value)
 table.insert(genome.genes,connectionGeneMutate1)
-
+print("connection gene in: "..genome.genes[#genome.genes].input.value)
+print("connection gene out: "..genome.genes[#genome.genes].out.value)
 print("Gene length after adding a new connection and gene: "..#genome.genes)
 
 connectionGeneMutate2 = connectionGene()
-connectionGeneMutate2.input = genome.genes.network[#genome.genes.network]
+connectionGeneMutate2.input = tempNeuron
 print("new 2nd connection gene input: "..connectionGeneMutate2.input.value)
 connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
+--link neuron 2 weight by adding innovation number to neuron
+table.insert(tempNeuron.weightIndex,connectionGeneMutate2.innovation)
+
 print("new 2nd connection gene innovation: "..connectionGeneMutate2.innovation)
-connectionGeneMutate2.out = node1.out
-print("new 2nd connection gene out: "..connectionGeneMutate2.out)
+connectionGeneMutate2.out = connectionGeneTemp.out
+--add connection gene innovation no. to out neuron of connection gene
+table.insert(connectionGeneMutate2.out.weightIndex,connectionGeneMutate2.innovation)
+print("new 2nd connection gene out: "..connectionGeneMutate2.out.value)
+--add gene to network
 table.insert(genome.genes,connectionGeneMutate2)
 
-print("Gene length after adding a final connection and gene: "..#gene)
-
+print("Gene length after adding a final connection and gene: "..#genome.genes)
 return gene
 end
 
@@ -450,6 +466,9 @@ function evaluateNetwork(genome)
           --now grab gene and store it
           table.insert(tempWout, tempW[b])
         end
+        if tempW[b].out== genome.network[i] and tempW[b].status == false then
+          print("right output but set to inactive so wont be processed")
+        end
     end
     print("found refined connection genes : "..#tempWout)
     --loop through all cases of tempWout, obtain ins, multiply by weights get new out value and REPLACE the gene with the new tempWouts
@@ -495,9 +514,24 @@ function evaluateNetwork(genome)
 
  testPropagate = BuildNetwork(testPropagate)
 
- --testPropagate = mutateNodeGene(testPropagate)
-
  f_to_pay_respects = evaluateNetwork(testPropagate)
+
+  mutateNodeGene(testPropagate)
+
+  evaluateNetwork(testPropagate)
+
+  mutateNodeGene(testPropagate)
+
+  mutateNodeGene(testPropagate)
+
+  evaluateNetwork(testPropagate)
+
+ for i = 1, #testPropagate.genes do
+   print("in: "..testPropagate.genes[i].input.value)
+   print("out: "..testPropagate.genes[i].out.value)
+   print("status: "..tostring(testPropagate.genes[i].status))
+   end
+ --f_to_pay_respects = evaluateNetwork(testPropagate)
  --print("gene value"..testPropagate.network[2].value)
  --print("gene out value"..testPropagate.genes[2].out.value)
  --I want to find out how many weight values are attatched to me
