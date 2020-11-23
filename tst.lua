@@ -21,9 +21,9 @@ actual place for the "data points" will correct this but first..some cod!!! DONE
 
 TO DO:
 1) Take it out for a test spin to test out functions created --DONE
-2) Test propagation
-3) Neurons holder for each network created
-4) Find a way to keep track of the fitness of each genome
+2) Test propagation --Done
+3) Neurons holder for each network created --DONE
+4) Find a way to keep track of the fitness of each genome --done
 5) Create function to organise a group of genes into different speciesPool
 
 ]]
@@ -42,7 +42,7 @@ outputs[1] = 0
 
 --activation function
 function sigmoid(x)
-    return 1.0 / (1.0 + exp(-x))
+    return 1.0 / (1.0 + math.exp(-x))
 end
 
 
@@ -417,7 +417,15 @@ end
 --love.graphics.line( x1, y1, x2, y2)
 
 print("number of values " ..countNodes)
-
+function love.draw()
+  for i = 1, nv do
+    love.graphics.setColor(1, 0.5, 1)
+    love.graphics.circle("fill", xArr[i], yArr[i], 10, 100) -- Draw white circle with 100 segments.
+    love.graphics.setColor(0, 1, 0.3, 1)
+    love.graphics.print(""..inputsObtained[i], inputsX[i], inputsY[i])
+    --love.graphics.line( x1, y1, x2, y2)
+  end
+end
 
 
 
@@ -464,10 +472,11 @@ end
 --neurons should match with innovation number
 --this is my new 'newGenome' function
 function createNewGenome()
-  genomeCluster = {} --holds the gene information network
+  genomeCluster = {} --holds the gene information network (general info)
   genomeCluster.genes = {} --weight info (connection genes info)
   genomeCluster.fitness = 0
   genomeCluster.network = {} --holds neurons
+  --genomeCluster.weightIndex = {} --holds index of a node that its connected with per neuron array
   return genomeCluster
   end
 --testPropagate = newGenome()
@@ -476,12 +485,12 @@ function createNewGenome()
 
  function newNeuron()
 	local neuron = {}
+  neuron.weightIndex = {} --keeps track of attatched weights (matches with node array index
+  neuron.inStatus = {} --0 if an input 1 if an output (matches with node array index
 	neuron.incoming = {} --data from previous thingis
 	neuron.value = 0.0 -- current neuron value
 	return neuron
 end
-
- testPropagate = createNewGenome()
 
 --gene.input = 0
 --gene.out = 0
@@ -489,18 +498,23 @@ end
 --gene.status = true
 --gene.innovation = 0 --ancestry monitor
 
- function createNetwork(genome)
+ function createNewNetwork(genome)
   local network = {}
-	network.neurons = {}
+	network.neurons = {} --previous inputs (and weights mabe)?
   network.weights = {}
+  network.weightIndex = {}
 	print("network size initial value"..#network.neurons)
 
+  weightTracker = 1
   --add neurons(create or direct inputs)
 	for i=1,#inputs do
     tempN = newNeuron()
     tempN.value = math.random(200,300)
+    table.insert(tempN.weightIndex,weightTracker) --stores tracker to neuron
     table.insert(network.neurons,tempN)
 		network.neurons[i] = tempN
+    table.insert(network.weightIndex,weightTracker)
+    weightTracker = weightTracker + 1
    -- print("neuron input value: "..network.neurons[i].value)
 	end
 
@@ -508,6 +522,7 @@ end
 	for o=1,#outputs do
     tempO = newNeuron()
     tempO.value =  math.random(500,800)
+    tempO.weightIndex = network.weightIndex
     table.insert(network.neurons,tempO)
 		network.neurons[MaxNodes+o] = tempO
     -- print("neuron output value: "..network.neurons[o].value)
@@ -536,7 +551,98 @@ end
   return genome
 end
 
- testPropagate = createNetwork(testPropagate)
+
+function evaluateNetwork(genome)
+  --obtain all connections to a node and shit out output
+  for i = 1, #genome.network do
+    tempW = {} --all associated
+    tempWout = {} --just the outs
+    oldValue = genome.network[i].value
+    --update node AND gene
+    --obtain node value
+    --TempNode = genome.network[i]
+    print("genome network neuron " ..genome.network[i].value)
+    print("weight index values " ..#genome.network[i].weightIndex)
+    --obtain weights through index
+    for j = 1, #genome.network[i].weightIndex do
+      --grab index and loop through network weights to check if its there
+      tempWeightIndx = genome.network[i].weightIndex[j]
+      print("weight index to look for"..tempWeightIndx)
+      for k = 1, #genome.genes do
+        if tempWeightIndx == k then
+          --clear a table: for k,v in pairs(tab) do tab[k]=nil end
+          --add to tempW
+          print("Associated gene in"..genome.genes[k].input)
+          print("Associated gene in"..genome.genes[k].out.value)
+          table.insert(tempW,genome.genes[k])--this will now hold all associated connection genes
+          end
+        end
+      end
+      --after finding all associated genes, filter ins and outs(if gene out == genome.network) and store temporarily
+      print("number of all found matching genes"..#tempW)
+      for b = 1, #tempW do
+        print("gene status: "..tostring(tempW[b].status))
+        print("gene out: "..tempW[b].out.value)
+        print("network out: "..genome.network[i].value)
+        if tempW[b].out.value == genome.network[i].value and tempW[b].status == true then
+          table.insert(tempWout, tempW[b])
+        end
+    end
+    print("found refined connection genes : "..#tempWout)
+    --loop through all cases of tempWout, obtain ins, multiply by weights get new out value and REPLACE the gene with the new tempWouts
+    sum = 0
+    activation = 0
+    for m = 1, #tempWout do
+      print("input value from filtered "..tempWout[m].input)
+      sum = sum + (tempWout[m].input * tempWout[m].weight)
+    end
+    if sum~=0 then
+      print("activated")
+      activation = sigmoid(sum)
+      print("activation: "..activation)
+      genome.network[i].value = activation
+      --replace all values of #tempwout.out with new activation value
+      for n = 1, #tempWout do
+        tempWout[n].out.value = activation
+      end
+      --replace in actual gene as well (both ins and outs)
+      for p = 1, #tempWout do
+        for q = 1, #genome.genes do
+          --if same innovation number and same output
+          if genome.genes[q].innovation == tempWout[p].innovation and genome.genes[q].out.value == oldValue then
+            print("previous "..genome.genes[q].out.value)
+            genome.genes[q]= tempWout[p]
+            print("current "..genome.genes[q].out.value)
+          end
+          --if same innovation number and same input
+          if genome.genes[q].innovation == tempWout[p].innovation and genome.genes[q].input == oldValue then
+            print("previous "..genome.genes[q].input)
+            genome.genes[q]= tempWout[p]
+            print("current "..genome.genes[q].input)
+          end
+
+          end
+        end
+      --REPLACE NODE
+    end
+    print("new genome value".. genome.network[i].value)
+  end
+  end
+ testPropagate = createNewGenome()
+ testPropagate = createNewNetwork(testPropagate)
+ f_to_pay_respects = evaluateNetwork(testPropagate)
  --print("gene value"..testPropagate.network[2].value)
  --print("gene out value"..testPropagate.genes[2].out.value)
  --I want to find out how many weight values are attatched to me
+
+
+
+
+--  function newNeuron()
+--	local neuron = {}
+--  neuron.weightIndex = {} --keeps track of attatched weights (matches with node array index
+--  neuron.inStatus = {} --0 if an input 1 if an output (matches with node array index
+--	neuron.incoming = {} --data from previous thingis
+--	neuron.value = 0.0 -- current neuron value
+--	return neuron
+--end
