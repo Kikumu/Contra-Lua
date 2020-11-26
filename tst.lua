@@ -73,7 +73,7 @@ function softMax(Outputs)
 function createNewSpecies()
 speciesMap = {}
 speciesMap.genomes = {}
-speciesMap.genomeMascot = speciesMap.species[math.random(1,#speciesMap.genomes)]
+speciesMap.genomeMascot = {}
 --speciesMap.overallFitness = 0 --adjusted fitness(accumilation of fitness of all genes)
 speciesMap.speciesFitness = 0
 speciesMap.attatchedSpecie = 0 --keeps track of where this species is in the species store
@@ -114,22 +114,26 @@ function generateSpecies(setOfGenomes)
       if #speciesStore~=0 then
       for j = 1, #speciesStore do
           --add genome
+          print("species mascot innov: "..#speciesStore)
           if speciationValue(setOfGenomes[i],speciesStore[j].mascot) < speciesDistance then
-          speciesStore[j].overallFitness = (speciesStore[j].overallFitness + setOfGenomes[i].fitness)/(#speciesStore[j].genomes + 1)
+          --speciesStore[j].speciesFitness = (speciesStore[j].speciesFitness + setOfGenomes[i].fitness)/(#speciesStore[j].genomes + 1)
+          speciesStore[j].speciesFitness = (speciesStore[j].speciesFitness + setOfGenomes[i].fitness)
           table.insert(speciesStore[j].species,setOfGenomes[i])
         else
           --create new species
           newSpecies = createNewSpecies()
           table.insert(newSpecies.genomes,setOfGenomes[i])
           table.insert(speciesStore,newSpecies)
-          speciesStore[#speciesStore].overallFitness = (speciesStore[#speciesStore].overallFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+          --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+          speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
           end
       end
     else
       newSpecies = createNewSpecies()
       table.insert(newSpecies.genomes,setOfGenomes[i])
       table.insert(speciesStore,newSpecies)
-      speciesStore[#speciesStore].overallFitness = (speciesStore[#speciesStore].overallFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+      --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+      speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
     end
     end
   end
@@ -222,11 +226,11 @@ end
 --return genome
 end
 
-function retunMaxInnovation(gene)
-maxInnovation = gene.genes[1].innovation
-for i = 1, #gene.genes do
-  if gene.genes[i].innovation > maxInnovation then
-  maxInnovation = gene.genes[i].innovation
+function retunMaxInnovation(genome)
+maxInnovation = genome.genes[1].innovation
+for i = 1, #genome.genes do
+  if genome.genes[i].innovation > maxInnovation then
+  maxInnovation = genome.genes[i].innovation
   end
 end
 return maxInnovation
@@ -582,7 +586,6 @@ end
 function evaluateGenome(genome)
   --obtain/update input neurons (input neurons have a state of 1)
   updateInputs(genome)
- for p = 1, 100 do
   --obtain all connections to a node and shit out output
   for i = 1, #genome.network do
     --print("old neuron value".. genome.network[i].value)
@@ -647,7 +650,7 @@ function evaluateGenome(genome)
   if genome.linkMutationChance > math.random() then
     mutateNodeGene(genome)
   end
- end
+
 end
 
 function createStartingPopulation(number)
@@ -668,40 +671,6 @@ function createStartingPopulation(number)
   return genomesCreated
   end
 
-testPop = createNewGenome()
-BuildNetwork(testPop)
-testPop2 = createNewGenome()
-BuildNetwork(testPop2)
---breed
---I need to fix my crossovers....................................................
-mutateConnectionGene(testPop)
-mutateConnectionGene(testPop)
-mutateNodeGene(testPop)
-mutateConnectionGene(testPop)
-mutateConnectionGene(testPop)
-mutateNodeGene(testPop)
-mutateConnectionGene(testPop)
-mutateConnectionGene(testPop)
-mutateNodeGene(testPop)
-mutateConnectionGene(testPop)
-mutateConnectionGene(testPop)
-mutateNodeGene(testPop)
-x = crossover(testPop2,testPop)
-print("child network "..#x.network)
-print("p1 network "..#testPop.network)
-print("p1 network "..#testPop2.network)
---evaluateGenome(x)
-y = crossover(x,testPop)
-mutateConnectionGene(y)
-mutateNodeGene(y)
-mutateConnectionGene(y)
-mutateNodeGene(y)
-mutateConnectionGene(y)
-mutateNodeGene(y)
-print("child network "..#y.network)
-print("p1 network "..#x.network)
-print("p1 network "..#testPop.network)
-z = crossover(y,testPop2)
-a = crossover(z,y)
-evaluateGenome(a)
---speciation(y,z)
+InitialPopulation = createStartingPopulation(initialPopulationSize)
+--evaluate each genome in population and group into species
+generateSpecies(InitialPopulation)
