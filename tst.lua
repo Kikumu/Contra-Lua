@@ -38,9 +38,13 @@ local speciesStore = {}
 --used to create species
 --GEN --SPECIES--GENOME
 
-nodeMutationChance = 0.5  --in use
+
+geneActivationChance = 0.3
+
+
+nodeMutationChance = 0.3  --in use
 geneMutationChance = 0.2  --in use
-geneActivationChance = 0.5
+genomePointMutateChance = 0.5
 selectionChance = 0.3 --in use
 initialPopulationSize = 1000 --in use
 
@@ -251,6 +255,25 @@ table.insert(genome.network,tempNeuron)
 table.insert(genome.genes,connectionGeneMutate2)
 end
 
+function pointMutateGenome(genome)
+  --select a random weight in the network
+  --mutateConnection = genome.genes[math.random(1,#genome.genes)]
+  --genome.genomePointMutateChance
+  for i = 1, #genome.genes do
+    --increment weight if point mutate chance higher
+    if genome.mutationChance > math.random() then
+      --mutate weight
+      genome.genes[i].weight = genome.genes[i].weight * genome.step
+    end
+    --decrement weight if
+    if genome.weightDecrementChance > math.random() then
+     genome.genes[i].weight = genome.genes[i].weight - genome.step
+    end
+  end
+
+
+
+  end
 --for crossover purposes(Goal is to add to g1)tested--TESTED AND REWORKED
 function matchingGenes(genome1,genome2)
   --genes in which innovations match
@@ -447,12 +470,16 @@ end
 
 --neurons should match with innovation number
 function createNewGenome()
-  genomeCluster = {} --holds the gene information network (general info)
-  genomeCluster.genes = {} --weight info (connection genes info)
-  genomeCluster.fitness = 0
-  genomeCluster.network = {} --holds neurons
-  genomeCluster.score = 0
-  return genomeCluster
+  genome = {} --holds the gene information network (general info)
+  genome.genes = {} --weight info (connection genes info)
+  genome.fitness = 0
+  genome.network = {} --holds neurons
+  genome.score = 0
+  genome.mutationChance = math.random()
+  genome.weightDecrementChance = math.random()
+  genome.step = math.random(0.5,1.5)
+  --genome.Enablability = math.random()
+  return genome
 end
 
  function newNeuron()
@@ -546,7 +573,7 @@ end
 function evaluateGenome(genome)
   --obtain/update input neurons (input neurons have a state of 1)
   updateInputs(genome)
- -- for p = 1, 100 do
+ for p = 1, 100 do
   --obtain all connections to a node and shit out output
   for i = 1, #genome.network do
     print("old neuron value".. genome.network[i].value)
@@ -604,8 +631,10 @@ function evaluateGenome(genome)
     print("new neuron value".. genome.network[i].value)
     --print("new genome i/o stats".. genome.network[i].inStatus)
   end
+  pointMutateGenome(genome)
+
   obtainOutputs(genome)
- -- end
+ end
 end
 
 function createStartingPopulation(number)
