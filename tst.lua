@@ -50,7 +50,7 @@ genomeLinkMutationChance = 0.5
 
 --genomePointMutateChance = 0.4
 selectionChance = 0.3 --in use
-initialPopulationSize = 1000 --in use
+initialPopulationSize = 100 --in use
 
 crossOverChance = 0.75
 NumberOfGenerations = 10000
@@ -60,7 +60,7 @@ NumberOfGenerations = 10000
 disjointmentConstant = 0.2 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.1 --c3
-speciesDistance = 0.3 --in use
+speciesDistance = 0.06 --in use
 MaxNodes = 1000
 
 --E is number of disjointed connection genes
@@ -73,12 +73,16 @@ function softMax(Outputs)
 function createNewSpecies()
 speciesMap = {}
 speciesMap.genomes = {}
-speciesMap.genomeMascot = {}
+speciesMap.genomeMascot = createNewGenome()
 --speciesMap.overallFitness = 0 --adjusted fitness(accumilation of fitness of all genes)
 speciesMap.speciesFitness = 0
 speciesMap.attatchedSpecie = 0 --keeps track of where this species is in the species store
 return speciesMap
 end
+
+function pickMascot(species)
+  species.genomeMascot = species.genomes[math.random(1,#species.genomes)]
+  end
 
 function resetSpecies(species)
   species.overallFitness = 0
@@ -110,33 +114,46 @@ function getAverageWeightDifference(genome,mascot)
 --each gene in the population is measured against the mascot
 --set of genomes has to be from previous generation
 function generateSpecies(setOfGenomes)
+  c = 0
   for i = 1,#setOfGenomes do
-      if #speciesStore~=0 then
-      for j = 1, #speciesStore do
-          --add genome
-          print("species mascot innov: "..#speciesStore)
-          if speciationValue(setOfGenomes[i],speciesStore[j].mascot) < speciesDistance then
+    --place genome in a species and move on to the next ay
+    if #speciesStore > 0 then
+    for j = 1, #speciesStore do
+      pickMascot(speciesStore[j])
+      print("species : "..j)
+      print("species genome numbers: "..#speciesStore[j].genomes)
+      print("number of species: "..#speciesStore)
+      s = speciationValue(setOfGenomes[i],speciesStore[j].mascot)
+      --print("speciation value "..s)
+      if s < speciesDistance then --0.04
           --speciesStore[j].speciesFitness = (speciesStore[j].speciesFitness + setOfGenomes[i].fitness)/(#speciesStore[j].genomes + 1)
           speciesStore[j].speciesFitness = (speciesStore[j].speciesFitness + setOfGenomes[i].fitness)
-          table.insert(speciesStore[j].species,setOfGenomes[i])
-        else
-          --create new species
-          newSpecies = createNewSpecies()
-          table.insert(newSpecies.genomes,setOfGenomes[i])
-          table.insert(speciesStore,newSpecies)
-          --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
-          speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
-          end
-      end
+          table.insert(speciesStore[j].genomes,setOfGenomes[i])
+          --print("here1")
+      break
     else
-      newSpecies = createNewSpecies()
-      table.insert(newSpecies.genomes,setOfGenomes[i])
-      table.insert(speciesStore,newSpecies)
-      --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
-      speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
+    newSpecies = createNewSpecies()
+    table.insert(newSpecies.genomes,setOfGenomes[i])
+    newSpecies.mascot = setOfGenomes[i]
+    table.insert(speciesStore,newSpecies)
+    --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+    speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
+    --print("here2")
+      break
+      end
     end
+  else
+    --if theres nothing in the store, create a new species
+    newSpecies = createNewSpecies()
+    table.insert(newSpecies.genomes,setOfGenomes[i])
+    newSpecies.mascot = setOfGenomes[i]
+    table.insert(speciesStore,newSpecies)
+    --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+    speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
+    --print("here3")
     end
   end
+end
 function speciationValue(genome,mascot)
   x,y = disjointGenes(genome,mascot)
   e,f = excessGenes(genome,mascot)
@@ -149,9 +166,9 @@ function speciationValue(genome,mascot)
   else
     c = b
     end
-  speciationValue = (disjointmentConstant*#x/c)+(excessGenesConstant*#e/c)+(weightImportanceConstant*avg)
-  print("speciation value "..speciationValue)
-  return speciationValue
+  speciationValueRes = (disjointmentConstant*#x/c)+(excessGenesConstant*#e/c)+(weightImportanceConstant*avg)
+  print("speciation value "..speciationValueRes)
+  return speciationValueRes
   end
 --general formula on paper: ( c1*E/N + c2*D/N + c3*W)
 
@@ -666,7 +683,7 @@ function createStartingPopulation(number)
     end
     --evaluateNetwork(testPop)
     table.insert(genomesCreated,testPop)
-    print("population no: "..i)
+   -- print("population no: "..i)
   end
   return genomesCreated
   end
@@ -674,3 +691,6 @@ function createStartingPopulation(number)
 InitialPopulation = createStartingPopulation(initialPopulationSize)
 --evaluate each genome in population and group into species
 generateSpecies(InitialPopulation)
+for i = 1,#speciesStore do
+  print("Number of genomes in this species: "..#speciesStore[i].genomes)
+  end
