@@ -11,8 +11,7 @@ TO DO:
 9) Integrate to game
 10) crossover hard test......done
 ]]
-
-
+local InitialPopulation = {}
 local TestInputs = {}
 TestInputs[1] = 1
 TestInputs[2] = 3
@@ -34,33 +33,24 @@ TestOutputs1[4] = 0.100
 
 --stores all species
 local speciesStore = {}
-
 --used to create species
 --GEN --SPECIES--GENOME
-
-
 --geneActivationChance = 0.3
-
 genomeFlipChance = 0.2
 genomeDecrementChance = 0.2
 genomeMutationChance = 0.3
 genomeActivationChance = 0.25
 genomeLinkMutationChance = 0.5
-
-
 --genomePointMutateChance = 0.4
-selectionChance = 0.3 --in use
-initialPopulationSize = 100 --in use
-
+selectionChance = 0.03 --in use
+initialPopulationSize = 1000 --in use
 crossOverChance = 0.75
 NumberOfGenerations = 10000
-
 --species classification variables
-
 disjointmentConstant = 0.2 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.1 --c3
-speciesDistance = 0.06 --in use
+speciesDistance = 0.058 --in use
 MaxNodes = 1000
 
 --E is number of disjointed connection genes
@@ -76,22 +66,76 @@ speciesMap.genomes = {}
 speciesMap.genomeMascot = createNewGenome()
 --speciesMap.overallFitness = 0 --adjusted fitness(accumilation of fitness of all genes)
 speciesMap.speciesFitness = 0
-speciesMap.attatchedSpecie = 0 --keeps track of where this species is in the species store
+--speciesMap.attatchedSpecie = 0 --keeps track of where this species is in the species store
 return speciesMap
 end
 
 function pickMascot(species)
   species.genomeMascot = species.genomes[math.random(1,#species.genomes)]
-  end
+end
 
 function resetSpecies(species)
-  species.overallFitness = 0
-  species.genomeMascot = species.species[math.random(1,#species.genomes)]
+  species.speciesFitness = 0
+  species.genomeMascot = createNewGenome()
   species.genomes = {}
-  end
+end
 
-function calculateFitness() --evaluates a genome and gives genome fitness
-  --from best genomes chosen from next generation, if not enough to fit poopulation of next generation, thats when crossover and breeding comes through
+function calculateFitness(species) --evaluates a genome and gives genome fitness
+for i=1,#species.genomes do
+  species.genomes[i].fitness = species.genomes[i].score/#species.genomes
+  species.fitness = species.fitness + species.genomes[i].fitness
+  end
+end
+
+function selectionSort(genomes)
+--sort by fitness
+for i = 1, #genomes do
+maxFitnessIndex = i
+for j = i + 1, #genomes do
+if genomes[j].fitness > genomes[maxFitnessIndex].fitness then
+maxFitnessIndex = j
+end
+end
+tempg = genomes[i]
+genomes[i] = genomes[maxFitnessIndex]
+genomes[maxFitnessIndex] = tempg
+end
+end
+--------------------------------------------------------------------
+function bestGenomesForNextGeneration(specie)
+  newPopulation = {}
+  --pick best/fittest genomes in each species for next generation
+  selectionSort(specie.genomes)
+  --top 5 fitness
+  for i = 1,#specie.genomes do
+    if i == 5 then
+      break
+    end
+  --add to "new" population mae sure its emptied before running this function
+  table.insert(newPopulation,specie.genomes[i])
+end
+return newPopulation
+end
+-----------------------------------------------------------------
+function nextGenerationMaker(Genomes)
+  offSprings = {}
+  for i = #Genomes,initialPopulationSize do
+    --select 2 random genomes for crossing over
+  g1 = Genomes[math.random(1,#Genomes)]
+  g2 = Genomes[math.random(1,#Genomes)]
+  g3 = crossover(g2,g1)
+  pointMutateGenome(g3)
+  --obtainOutputs(genome)
+  print("offspring")
+  if Genomes[i].mutationChance > math.random() then
+    mutateConnectionGene(g3)
+  end
+  if Genomes[i].linkMutationChance > math.random() then
+    mutateNodeGene(g3)
+  end
+  table.insert(offSprings,g3)
+end
+return offSprings
 end
 
 function fitnessComparator(genome1,genome2)
@@ -108,8 +152,14 @@ function getAverageWeightDifference(genome,mascot)
   end
   Average = weightSum/(#genome.genes + #mascot.genes)
   return Average
-  end
+end
 
+function initializeSpecies(genome)
+  newSpecies = createNewSpecies()
+  table.insert(newSpecies.genomes,genome)
+  newSpecies.mascot = genome
+  table.insert(speciesStore,newSpecies)
+  end
 --a random gene is chosen from a population
 --each gene in the population is measured against the mascot
 --set of genomes has to be from previous generation
@@ -117,40 +167,29 @@ function generateSpecies(setOfGenomes)
   c = 0
   for i = 1,#setOfGenomes do
     --place genome in a species and move on to the next ay
-    if #speciesStore > 0 then
+    --found = false
+    if #speciesStore > 0  then
     for j = 1, #speciesStore do
+      if speciesStore[j].genomes == nil then
+        initializeSpecies(setOfGenomes[i])
+        break
+      end
       pickMascot(speciesStore[j])
-      print("species : "..j)
-      print("species genome numbers: "..#speciesStore[j].genomes)
-      print("number of species: "..#speciesStore)
+      --print("species : "..j)
+      --print("species genome numbers: "..#speciesStore[j].genomes)
+      --print("number of species: "..#speciesStore)
       s = speciationValue(setOfGenomes[i],speciesStore[j].mascot)
       --print("speciation value "..s)
       if s < speciesDistance then --0.04
-          --speciesStore[j].speciesFitness = (speciesStore[j].speciesFitness + setOfGenomes[i].fitness)/(#speciesStore[j].genomes + 1)
-          speciesStore[j].speciesFitness = (speciesStore[j].speciesFitness + setOfGenomes[i].fitness)
           table.insert(speciesStore[j].genomes,setOfGenomes[i])
-          --print("here1")
       break
     else
-    newSpecies = createNewSpecies()
-    table.insert(newSpecies.genomes,setOfGenomes[i])
-    newSpecies.mascot = setOfGenomes[i]
-    table.insert(speciesStore,newSpecies)
-    --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
-    speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
-    --print("here2")
+    initializeSpecies(setOfGenomes[i])
       break
       end
     end
   else
-    --if theres nothing in the store, create a new species
-    newSpecies = createNewSpecies()
-    table.insert(newSpecies.genomes,setOfGenomes[i])
-    newSpecies.mascot = setOfGenomes[i]
-    table.insert(speciesStore,newSpecies)
-    --speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
-    speciesStore[#speciesStore].speciesFitness = (speciesStore[#speciesStore].speciesFitness + setOfGenomes[i].fitness)
-    --print("here3")
+    initializeSpecies(setOfGenomes[i])
     end
   end
 end
@@ -198,7 +237,6 @@ v2 = math.random(1,#genome.network)
 --print("max val in connection gene"..max)
 node1 = genome.network[v1] --1
 node2 = genome.network[v2] --1
-
 --loop through the 4 neurons and check if same innov number
 state1 = 0
 state2 = 0
@@ -211,20 +249,16 @@ for i = 1, #node1.weightIndex do
       end
   end
 end
-
 if state1 == 0 then
   if node1.inStatus~= 1 then --if input is not a network output node
     state2 = 1
     end
 end
-
 if state2 == 1 then
   if node2.inStatus~= 0 then --if input is not a network input node
     state3 = 1
     end
 end
-
-
 if state3 == 1 then
 connectionGeneMutate1 = connectionGene()
 connectionGeneMutate1.input = node1
@@ -502,9 +536,9 @@ end
 function createNewGenome()
   genome = {} --holds the gene information network (general info)
   genome.genes = {} --weight info (connection genes info)
-  genome.fitness = 0
+  genome.fitness = 0 --genome raw score/avarage number of genomes in species
   genome.network = {} --holds neurons
-  genome.score = 0
+  genome.score = 0 --genome raw score
   genome.mutationChance = math.random() --genomeMutationChance
   genome.flipSign = math.random() --genomeFlipChance
   genome.activationChance = math.random() -- genomeActivationChance
@@ -669,7 +703,6 @@ function evaluateGenome(genome)
   end
 
 end
-
 function createStartingPopulation(number)
   genomesCreated = {}
   for i = 1, number do
@@ -687,10 +720,9 @@ function createStartingPopulation(number)
   end
   return genomesCreated
   end
-
 InitialPopulation = createStartingPopulation(initialPopulationSize)
 --evaluate each genome in population and group into species
 generateSpecies(InitialPopulation)
-for i = 1,#speciesStore do
-  print("Number of genomes in this species: "..#speciesStore[i].genomes)
-  end
+--for i = 1,#speciesStore do
+ print("Number of genomes in this END species: "..#speciesStore)
+--end
