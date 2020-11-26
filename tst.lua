@@ -39,12 +39,16 @@ local speciesStore = {}
 --GEN --SPECIES--GENOME
 
 
-geneActivationChance = 0.3
+--geneActivationChance = 0.3
+
+genomeFlipChance = 0.2
+genomeDecrementChance = 0.2
+genomeMutationChance = 0.3
+genomeActivationChance = 0.25
+genomeLinkMutationChance = 0.5
 
 
-nodeMutationChance = 0.3  --in use
-geneMutationChance = 0.2  --in use
-genomePointMutateChance = 0.5
+--genomePointMutateChance = 0.4
 selectionChance = 0.3 --in use
 initialPopulationSize = 1000 --in use
 
@@ -165,11 +169,12 @@ end
 
 --tested(needs reviewing) --TESTED AND REWORKED
 function mutateConnectionGene(genome)
+
 max = retunMaxInnovation(genome)
 --grab 2 random nodes from network
 v1 = math.random(1,#genome.network)
 v2 = math.random(1,#genome.network)
-print("max val in connection gene"..max)
+--print("max val in connection gene"..max)
 node1 = genome.network[v1] --1
 node2 = genome.network[v2] --1
 
@@ -203,16 +208,17 @@ if state3 == 1 then
 connectionGeneMutate1 = connectionGene()
 connectionGeneMutate1.input = node1
 connectionGeneMutate1.innovation = max + 1
-print("mutate a: ",connectionGeneMutate1.input.value)
+--print("mutate a: ",connectionGeneMutate1.input.value)
 table.insert(connectionGeneMutate1.input.weightIndex,connectionGeneMutate1.innovation) --register additional gene to neuron
 genome.network[v1] = connectionGeneMutate1.input
 connectionGeneMutate1.out = node2
 table.insert(connectionGeneMutate1.out.weightIndex,connectionGeneMutate1.innovation) --register additional gene to neuron
 genome.network[v2] = connectionGeneMutate1.out
-print("mutate b: ",connectionGeneMutate1.out.value)
+--print("mutate b: ",connectionGeneMutate1.out.value)
 print("a gene has been mutated by connection")
 table.insert(genome.genes,connectionGeneMutate1)
 end
+
 --return genome
 end
 
@@ -231,7 +237,7 @@ end
 function mutateNodeGene(genome)
 tstval = #genome.genes
 maxInnovation = retunMaxInnovation(genome)
-print("Mutation max prev innovation value: "..maxInnovation)
+--print("Mutation max prev innovation value: "..maxInnovation)
 genepos = math.random(1,#genome.genes)
 connectionGeneTemp = genome.genes[genepos]
 connectionGeneTemp.status = false
@@ -253,26 +259,29 @@ connectionGeneMutate2.out = connectionGeneTemp.out
 table.insert(connectionGeneMutate2.out.weightIndex,connectionGeneMutate2.innovation)
 table.insert(genome.network,tempNeuron)
 table.insert(genome.genes,connectionGeneMutate2)
+print("A GENE HAS BEEN MUTATED BY NODE")
 end
 
 function pointMutateGenome(genome)
-  --select a random weight in the network
-  --mutateConnection = genome.genes[math.random(1,#genome.genes)]
-  --genome.genomePointMutateChance
   for i = 1, #genome.genes do
-    --increment weight if point mutate chance higher
-    if genome.mutationChance > math.random() then
-      --mutate weight
+    --activation chance
+    --weight inc/dec probability
+    --flip sign probability
+    if genome.flipSign > math.random() then
+      genome.genes[i].weight = -genome.genes[i].weight
+    end
+    if genome.weightDecrementChance > math.random() then
+     genome.genes[i].weight = genome.genes[i].weight - (genome.genes[i].weight * genome.step)
+   else
       genome.genes[i].weight = genome.genes[i].weight * genome.step
     end
-    --decrement weight if
-    if genome.weightDecrementChance > math.random() then
-     genome.genes[i].weight = genome.genes[i].weight - genome.step
+
+    if genome.activationChance > math.random() then
+      genome.genes[i].status = true
+    else
+      genome.genes[i].status = false
     end
-  end
-
-
-
+    end
   end
 --for crossover purposes(Goal is to add to g1)tested--TESTED AND REWORKED
 function matchingGenes(genome1,genome2)
@@ -475,10 +484,12 @@ function createNewGenome()
   genome.fitness = 0
   genome.network = {} --holds neurons
   genome.score = 0
-  genome.mutationChance = math.random()
-  genome.weightDecrementChance = math.random()
+  genome.mutationChance = math.random() --genomeMutationChance
+  genome.flipSign = math.random() --genomeFlipChance
+  genome.activationChance = math.random() -- genomeActivationChance
+  genome.weightDecrementChance = math.random() --genomeDecrementChance
+  genome.linkMutationChance = math.random() --genomeLinkMutationChance
   genome.step = math.random(0.5,1.5)
-  --genome.Enablability = math.random()
   return genome
 end
 
@@ -487,8 +498,6 @@ end
   neuron.weightIndex = {} --stores innovation number of the connection gene its connected to
   neuron.inStatus = 2 --0 if an input 1 if an output (matches with node array index) 2 if normal neuron
   neuron.inputNumber = 0 --this is just for monitoring it on input nodes its not used anywhere else
-  --neuron.outputNumber = 0 --this is just for monitoring it on output nodes its not used anywhere else
-	--neuron.incoming = {} --data from previous thingis
 	neuron.value = 0.0 -- current neuron value
 	return neuron
 end
@@ -524,7 +533,7 @@ end
     tempConnectionGene.innovation = innovationNumber
     randN = math.random()
     --print("random value "..randN)
-    if  randN > geneActivationChance then
+    if  genome.activationChance > math.random() then
       tempConnectionGene.status = true
      -- print("One or more of connection genes are enabled")
     else
@@ -576,10 +585,9 @@ function evaluateGenome(genome)
  for p = 1, 100 do
   --obtain all connections to a node and shit out output
   for i = 1, #genome.network do
-    print("old neuron value".. genome.network[i].value)
+    --print("old neuron value".. genome.network[i].value)
     tempWout = {} --just the outs the ones we need(weights)
     oldValue = genome.network[i] --old neuron data
-
     --update node AND gene
     --obtain node value
     --TempNode = genome.network[i]
@@ -609,15 +617,15 @@ function evaluateGenome(genome)
       activation = 0
       --calculate sum
       for m = 1, #tempWout do
-     print("input value from filtered "..tempWout[m].input.value)
-     print("output value from filtered "..tempWout[m].out.value)
-     print("weight value from filtered "..tempWout[m].weight)
+    -- print("input value from filtered "..tempWout[m].input.value)
+    -- print("output value from filtered "..tempWout[m].out.value)
+    -- print("weight value from filtered "..tempWout[m].weight)
       sum = sum + (tempWout[m].input.value * tempWout[m].weight)
-     print("sum: "..sum)
+     --print("sum: "..sum)
       end
       activation = sigmoid(sum)
       --print("activated")
-    print("activation value: "..activation)
+    --print("activation value: "..activation)
       if #tempWout~=0 then
         genome.network[i].value = activation
       --replace all values of #tempwout.out with new activation value
@@ -628,12 +636,17 @@ function evaluateGenome(genome)
 
       --replace in actual gene as well (both ins and outs)
       --REPLACE NODE
-    print("new neuron value".. genome.network[i].value)
+    --print("new neuron value".. genome.network[i].value)
     --print("new genome i/o stats".. genome.network[i].inStatus)
   end
   pointMutateGenome(genome)
-
   obtainOutputs(genome)
+  if genome.mutationChance > math.random() then
+    mutateConnectionGene(genome)
+  end
+  if genome.linkMutationChance > math.random() then
+    mutateNodeGene(genome)
+  end
  end
 end
 
@@ -642,10 +655,10 @@ function createStartingPopulation(number)
   for i = 1, number do
     testPop = createNewGenome()
     BuildNetwork(testPop)
-    if nodeMutationChance > math.random() then
+    if testPop.mutationChance > math.random() then
       mutateNodeGene(testPop)
     end
-    if geneMutationChance > math.random() then
+    if testPop.mutationChance > math.random() then
       mutateConnectionGene(testPop)
     end
     --evaluateNetwork(testPop)
