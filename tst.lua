@@ -1,3 +1,18 @@
+--[[
+TO DO:
+1) Take it out for a test spin to test out functions(mutations,crossovers,propagation,disjoint genes, matching genes, excess,outputs, inputs,network feedforward monitor) created --DONE
+2) Test propagation --Done
+3) Neurons holder for each network created --DONE
+4) Find a way to keep track of the fitness of each genome --done
+5) Create function to organise a group of genes into different speciesPool --in progress(speciation)
+6) Fitness function of genomes
+7) Rework how the network breeds --done
+8) Fix how genes mutate --done
+9) Integrate to game
+10) crossover hard test......done
+]]
+
+
 local TestInputs = {}
 TestInputs[1] = 1
 TestInputs[2] = 3
@@ -17,12 +32,18 @@ TestOutputs1[2] = 0.20
 TestOutputs1[3] = 0.440
 TestOutputs1[4] = 0.100
 
+--stores all species
+local speciesStore = {}
+
+--used to create species
+--GEN --SPECIES--GENOME
+
 nodeMutationChance = 0.5  --in use
 geneMutationChance = 0.2  --in use
 geneActivationChance = 0.5
 selectionChance = 0.3 --in use
 initialPopulationSize = 1000 --in use
-speciesDistance = 0.23 --in use
+
 crossOverChance = 0.75
 NumberOfGenerations = 10000
 
@@ -31,12 +52,39 @@ NumberOfGenerations = 10000
 disjointmentConstant = 0.2 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.1 --c3
-MaxNodes = 11
+speciesDistance = 0.3 --in use
+MaxNodes = 1000
 
 --E is number of disjointed connection genes
 --D is number of excess connection genes
 --W is weight value
 --N number of connection genes
+function softMax(Outputs)
+  --val = val/sum of exp(val) entire val output net including val itself
+  end
+function createNewSpecies()
+speciesMap = {}
+speciesMap.genomes = {}
+speciesMap.genomeMascot = speciesMap.species[math.random(1,#speciesMap.genomes)]
+--speciesMap.overallFitness = 0 --adjusted fitness(accumilation of fitness of all genes)
+speciesMap.speciesFitness = 0
+speciesMap.attatchedSpecie = 0 --keeps track of where this species is in the species store
+return speciesMap
+end
+
+function resetSpecies(species)
+  species.overallFitness = 0
+  species.genomeMascot = species.species[math.random(1,#species.genomes)]
+  species.genomes = {}
+  end
+
+function calculateFitness() --evaluates a genome and gives genome fitness
+  --from best genomes chosen from next generation, if not enough to fit poopulation of next generation, thats when crossover and breeding comes through
+end
+
+function fitnessComparator(genome1,genome2)
+  --if genome is greater print one else print/return 0
+end
 
 function getAverageWeightDifference(genome,mascot)
   weightSum = 0
@@ -50,9 +98,34 @@ function getAverageWeightDifference(genome,mascot)
   return Average
   end
 
-function speciation(genome,mascot)
-  newSpecies1 = {}
-  newSpecies2 = {}
+--a random gene is chosen from a population
+--each gene in the population is measured against the mascot
+--set of genomes has to be from previous generation
+function generateSpecies(setOfGenomes)
+  for i = 1,#setOfGenomes do
+      if #speciesStore~=0 then
+      for j = 1, #speciesStore do
+          --add genome
+          if speciationValue(setOfGenomes[i],speciesStore[j].mascot) < speciesDistance then
+          speciesStore[j].overallFitness = (speciesStore[j].overallFitness + setOfGenomes[i].fitness)/(#speciesStore[j].genomes + 1)
+          table.insert(speciesStore[j].species,setOfGenomes[i])
+        else
+          --create new species
+          newSpecies = createNewSpecies()
+          table.insert(newSpecies.genomes,setOfGenomes[i])
+          table.insert(speciesStore,newSpecies)
+          speciesStore[#speciesStore].overallFitness = (speciesStore[#speciesStore].overallFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+          end
+      end
+    else
+      newSpecies = createNewSpecies()
+      table.insert(newSpecies.genomes,setOfGenomes[i])
+      table.insert(speciesStore,newSpecies)
+      speciesStore[#speciesStore].overallFitness = (speciesStore[#speciesStore].overallFitness + setOfGenomes[i].fitness)/(speciesStore[#speciesStore].genomes)
+    end
+    end
+  end
+function speciationValue(genome,mascot)
   x,y = disjointGenes(genome,mascot)
   e,f = excessGenes(genome,mascot)
   avg = getAverageWeightDifference(genome,mascot)
@@ -66,27 +139,10 @@ function speciation(genome,mascot)
     end
   speciationValue = (disjointmentConstant*#x/c)+(excessGenesConstant*#e/c)+(weightImportanceConstant*avg)
   print("speciation value "..speciationValue)
-  if speciationValue > speciesDistance then
-    --table.insert(newSpecies1,genome)
-    print("specie1")
-  else
-    --table.insert(newSpecies2,genome)
-    print("specie2")
-    end
+  return speciationValue
   end
 --general formula on paper: ( c1*E/N + c2*D/N + c3*W)
---[[
-TO DO:
-1) Take it out for a test spin to test out functions created --DONE
-2) Test propagation --Done
-3) Neurons holder for each network created --DONE
-4) Find a way to keep track of the fitness of each genome --done
-5) Create function to organise a group of genes into different speciesPool
-6) Rework how the network breeds --done
-7) Fix how genes mutate --done
-8) Integrate to game
-9) My crossover cannot handle mutations..........
-]]
+
 
 --activation function
 function sigmoid(x)
@@ -188,13 +244,11 @@ table.insert(genome.genes,connectionGeneMutate1)
 connectionGeneMutate2 = connectionGene()
 connectionGeneMutate2.input = tempNeuron
 connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
-print("Mutation max curr innovation value: "..connectionGeneMutate2.innovation)
 table.insert(tempNeuron.weightIndex,connectionGeneMutate2.innovation)
 connectionGeneMutate2.out = connectionGeneTemp.out
 table.insert(connectionGeneMutate2.out.weightIndex,connectionGeneMutate2.innovation)
 table.insert(genome.network,tempNeuron)
 table.insert(genome.genes,connectionGeneMutate2)
-print("This gene has been mutated by node")
 end
 
 --for crossover purposes(Goal is to add to g1)tested--TESTED AND REWORKED
@@ -397,6 +451,7 @@ function createNewGenome()
   genomeCluster.genes = {} --weight info (connection genes info)
   genomeCluster.fitness = 0
   genomeCluster.network = {} --holds neurons
+  genomeCluster.score = 0
   return genomeCluster
 end
 
@@ -580,13 +635,31 @@ BuildNetwork(testPop2)
 mutateConnectionGene(testPop)
 mutateConnectionGene(testPop)
 mutateNodeGene(testPop)
+mutateConnectionGene(testPop)
+mutateConnectionGene(testPop)
+mutateNodeGene(testPop)
+mutateConnectionGene(testPop)
+mutateConnectionGene(testPop)
+mutateNodeGene(testPop)
+mutateConnectionGene(testPop)
+mutateConnectionGene(testPop)
+mutateNodeGene(testPop)
 x = crossover(testPop2,testPop)
 print("child network "..#x.network)
 print("p1 network "..#testPop.network)
 print("p1 network "..#testPop2.network)
 --evaluateGenome(x)
 y = crossover(x,testPop)
+mutateConnectionGene(y)
+mutateNodeGene(y)
+mutateConnectionGene(y)
+mutateNodeGene(y)
+mutateConnectionGene(y)
+mutateNodeGene(y)
 print("child network "..#y.network)
 print("p1 network "..#x.network)
 print("p1 network "..#testPop.network)
-evaluateGenome(y)
+z = crossover(y,testPop2)
+a = crossover(z,y)
+evaluateGenome(a)
+--speciation(y,z)
