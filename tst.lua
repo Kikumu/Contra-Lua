@@ -43,12 +43,12 @@ genomeLinkMutationChance = 0.5
 selectionChance = 0.03 --in use
 initialPopulationSize = 100 --in use
 crossOverChance = 0.75
-NumberOfGenerations = 20
+NumberOfGenerations = 1000
 --species classification variables
 disjointmentConstant = 0.2 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.1 --c3
-speciesDistance = 0.18 --in use
+speciesDistance = 0.28 --in use
 MaxNodes = 1000
 
 --E is number of disjointed connection genes
@@ -113,14 +113,14 @@ function bestGenomesForNextGeneration(specie)
     break
     end
   table.insert(p1,specie.genomes[i])
-  print("stored")
+  --print("stored: "..i)
   end
 --return newPopulation
 end
 -----------------------------------------------------------------
 function nextGenerationMaker(Genomes)
-  offSprings = {}
-  for i = #Genomes,initialPopulationSize do
+ -- offSprings = {}
+for i = #Genomes,initialPopulationSize do
     --select 2 random genomes for crossing over
   g1 = Genomes[math.random(1,#Genomes)]
   g2 = Genomes[math.random(1,#Genomes)]
@@ -137,9 +137,9 @@ function nextGenerationMaker(Genomes)
   if Genomes[math.random(1,#Genomes)].linkMutationChance > math.random() then
     mutateNodeGene(g3)
   end
-  table.insert(offSprings,g3)
+  table.insert(p1,g3)
 end
-return offSprings
+--return offSprings
 end
 
 function getAverageWeightDifference(genome,mascot)
@@ -724,12 +724,12 @@ InitialPopulation = createStartingPopulation(initialPopulationSize)
 --generateSpecies(InitialPopulation)
 evaluateGenome(InitialPopulation[1])
 p1 = {}
-p2 = {}
+--p2 = {}
 for i = 1,NumberOfGenerations do
   generateSpecies(InitialPopulation)
- -- print("gen: "..i)
+  print("pop: "..#InitialPopulation)--population size keeps increasing??...why?..
  -- print("initialPop: "..#InitialPopulation)
-  -- print("Species: "..#speciesStore[1].genomes)
+-- print("Species: "..#speciesStore[1].genomes)
     for k = 1, #speciesStore do
       --evaluate each genome
       print(k)
@@ -744,14 +744,20 @@ for i = 1,NumberOfGenerations do
     for l = 1, #speciesStore do
       bestGenomesForNextGeneration(speciesStore[l])
     end
-     -- print("best genomes: "..#p1)
+     --
      -- print("best genomes score at 1: "..p1[1].score)
-      p2 = nextGenerationMaker(p1)
+     print("parents genomes: "..#p1)
+      nextGenerationMaker(p1)
+      print("total pop after breeding: "..#p1)
     --assign pi and p2 to initial population
      InitialPopulation = {}
      accumilateGenesForSorting(p1,InitialPopulation)
-     accumilateGenesForSorting(p2,InitialPopulation)
-     resetSpecies(speciesStore)
+     print("Initial pop after adding parents: "..#InitialPopulation)
+     --resetSpecies(speciesStore)
+     if i~=NumberOfGenerations then
+     speciesStore = {}
+     end
+     p1 = {}
   end
 
 --for i = 1,#speciesStore do
