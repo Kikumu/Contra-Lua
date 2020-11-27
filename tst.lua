@@ -22,14 +22,12 @@ TestInputs[5] = 7
 local TestOutputs = {}
 TestOutputs[1] = 0.8
 TestOutputs[2] = 0.8
-TestOutputs[3] = 0.8
-TestOutputs[4] = 0.8
+
 
 local TestOutputs1 = {}
-TestOutputs1[1] = 0.50
-TestOutputs1[2] = 0.20
-TestOutputs1[3] = 0.440
-TestOutputs1[4] = 0.100
+TestOutputs1[1] = 10
+TestOutputs1[2] = 10
+
 
 --stores all species
 local speciesStore = {}
@@ -43,14 +41,14 @@ genomeActivationChance = 0.25
 genomeLinkMutationChance = 0.5
 --genomePointMutateChance = 0.4
 selectionChance = 0.03 --in use
-initialPopulationSize = 1000 --in use
+initialPopulationSize = 100 --in use
 crossOverChance = 0.75
-NumberOfGenerations = 10000
+NumberOfGenerations = 20
 --species classification variables
 disjointmentConstant = 0.2 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.1 --c3
-speciesDistance = 0.058 --in use
+speciesDistance = 0.18 --in use
 MaxNodes = 1000
 
 --E is number of disjointed connection genes
@@ -82,8 +80,9 @@ end
 
 function calculateFitness(species) --evaluates a genome and gives genome fitness
 for i=1,#species.genomes do
+  --print("score in fit: "..species.genomes[i].score)
   species.genomes[i].fitness = species.genomes[i].score/#species.genomes
-  species.fitness = species.fitness + species.genomes[i].fitness
+  species.speciesFitness = species.speciesFitness + species.genomes[i].fitness
   end
 end
 
@@ -99,22 +98,24 @@ end
 tempg = genomes[i]
 genomes[i] = genomes[maxFitnessIndex]
 genomes[maxFitnessIndex] = tempg
+--print("max ffffffffff: "..genomes[1].fitness)
 end
 end
 --------------------------------------------------------------------
 function bestGenomesForNextGeneration(specie)
-  newPopulation = {}
+  --newPopulation = {}
   --pick best/fittest genomes in each species for next generation
   selectionSort(specie.genomes)
   --top 5 fitness
+ -- print("bssst: "..#specie.genomes)
   for i = 1,#specie.genomes do
-    if i == 5 then
-      break
+    if i == 3 then
+    break
     end
-  --add to "new" population mae sure its emptied before running this function
-  table.insert(newPopulation,specie.genomes[i])
-end
-return newPopulation
+  table.insert(p1,specie.genomes[i])
+  print("stored")
+  end
+--return newPopulation
 end
 -----------------------------------------------------------------
 function nextGenerationMaker(Genomes)
@@ -123,23 +124,22 @@ function nextGenerationMaker(Genomes)
     --select 2 random genomes for crossing over
   g1 = Genomes[math.random(1,#Genomes)]
   g2 = Genomes[math.random(1,#Genomes)]
+--  print("g1 network: "..#g1.network)
+ -- print("g2 network: "..#g2.network)
   g3 = crossover(g2,g1)
+--  print("g3 network: "..#g3.network)
   pointMutateGenome(g3)
   --obtainOutputs(genome)
-  print("offspring")
-  if Genomes[i].mutationChance > math.random() then
+ -- print("offspring")
+  if Genomes[math.random(1,#Genomes)].mutationChance > math.random() then
     mutateConnectionGene(g3)
   end
-  if Genomes[i].linkMutationChance > math.random() then
+  if Genomes[math.random(1,#Genomes)].linkMutationChance > math.random() then
     mutateNodeGene(g3)
   end
   table.insert(offSprings,g3)
 end
 return offSprings
-end
-
-function fitnessComparator(genome1,genome2)
-  --if genome is greater print one else print/return 0
 end
 
 function getAverageWeightDifference(genome,mascot)
@@ -206,7 +206,7 @@ function speciationValue(genome,mascot)
     c = b
     end
   speciationValueRes = (disjointmentConstant*#x/c)+(excessGenesConstant*#e/c)+(weightImportanceConstant*avg)
-  print("speciation value "..speciationValueRes)
+  --print("speciation value "..speciationValueRes)
   return speciationValueRes
   end
 --general formula on paper: ( c1*E/N + c2*D/N + c3*W)
@@ -402,7 +402,7 @@ function accumilateGenesForSorting(genes,tbs)
   return tbs
 end
 --sorted child gene according to innovation number
-function selectionSort(DisjointedGenesArr, ExcessGenesArr, MatchingGenesArr)
+function arrayCombinerForCrossover(DisjointedGenesArr, ExcessGenesArr, MatchingGenesArr)
 --genome = createNewGenome()
 genesToSort = {}
 accumilateGenesForSorting(DisjointedGenesArr,genesToSort)
@@ -412,13 +412,12 @@ accumilateGenesForSorting(MatchingGenesArr,genesToSort)
 return genesToSort
 end
 
-
-
 function BuildNetworkOfChildGene(gene)
   --build i and o
   neurons2 = {}
   genome = createNewGenome()
   --connect/create inputs
+  print ("number of genes in child "..#gene)
   for i = 1, #TestInputs do
     TempInput = newNeuron()
     --how many in gene are connected to this one?
@@ -430,7 +429,7 @@ function BuildNetworkOfChildGene(gene)
         TempInput.inputNumber = i
         table.insert(TempInput.weightIndex,gene[j].innovation)
         gene[j].input = TempInput
-        --print("input detected")
+      --  print("input detected")
       end
     end
     table.insert(genome.network,TempInput)
@@ -443,36 +442,37 @@ end
       if gene[j].input.inStatus == 1 and gene[j].input.inputNumber==o then
         TempOutput.inStatus = 1
         TempOutput.inputNumber = o
-         --print("output detected which shouldnt be done(illegal)")
+       --  print("output detected which shouldnt be done(illegal)")
          gene[j].out = TempOutput
         table.insert(TempOutput.weightIndex,gene[j].innovation)
       end
       if gene[j].out.inStatus == 1 and gene[j].out.inputNumber==o then
         TempOutput.inStatus = 1
         TempOutput.inputNumber = o
-         --print("output detected is allowed")
+      --   print("output detected is allowed")
          gene[j].out = TempOutput
         table.insert(TempOutput.weightIndex,gene[j].innovation)
       end
     end
     table.insert(genome.network,TempOutput)
   end
-  print("number of neurons initially"..#neurons2)
+ -- print("number of neurons initially"..#neurons2)
+ -- print("number of neurons in networ initially"..#genome.network)
   for k = 1,#gene do
     if gene[k].input.inStatus == 2 then
         table.insert(neurons2,gene[k].input)
         --make gene notice this new point in neurons2
         gene[k].input = neurons2[#neurons2]
-       print("normal neuron detected 1")
+    --   print("normal neuron detected 1")
       end
       --if out connection gene is a normal neuron
       if gene[k].out.inStatus == 2 then
         table.insert(neurons2,gene[k].out)
         gene[k].out = neurons2[#neurons2]
-        print("normal neuron detected 2")
+      --  print("normal neuron detected 2")
       end
     end
-  print("number of neurons after rolling in genes"..#neurons2)
+ -- print("number of neurons after rolling in genes"..#neurons2)
   --create and connect other neurons
   --other neurons are labelled "2"
   --they can either be "in" connection gene or "out"
@@ -491,12 +491,13 @@ end
     end
 
   end
-  print("number of neurons after clean  "..#neurons2)
+--  print("number of neurons after clean  "..#neurons2)
     for i = 1, #neurons2 do
       table.insert(genome.network,neurons2[i])
     end
     genome.genes = gene
     --genome.genes = copyGene(gene)
+ --   print("number of neurons in network after"..#genome.network)
     return genome
   end
 --function newNeuron()
@@ -513,23 +514,18 @@ end
 function crossover(genome1,genome2) --genome in the sense that you are passing to this function a set of genomes
 m = matchingGenes(genome1,genome2)
 --print("number of matching neurons: "..#n1)
-print("number of matching genes: "..#m)
+--print("number of matching genes: "..#m)
 d = disjointGenes(genome1,genome2)
 --print("number of disjoint neurons: "..#n2)
-print("number of disjoint genes: "..#d)
+--print("number of disjoint genes: "..#d)
 e = excessGenes(genome1,genome2)
 --print("number of excess neurons: "..#n3)
-print("number of excess genes: "..#e)
+--print("number of excess genes: "..#e)
 --extract neurons from genes and put in a network
-genes = selectionSort(d, e, m)
+genes = arrayCombinerForCrossover(d, e, m)
 --genome.network = nT1
-print("number of all genes: "..#genes)
+--print("number of all genes: "..#genes)
 return BuildNetworkOfChildGene(genes)
-end
-
-function species(genes)
-speciesPool = {}
-return speciesPool
 end
 
 --neurons should match with innovation number
@@ -620,19 +616,23 @@ function updateInputs(genome)
   end
 end
 
---for testing purposes
+--used to update fitness
   function obtainOutputs(genome)
-    OutCount = 1
     fitness= 0
+    sum = 0
+    OutCount = 1
   for i = 1, #genome.network do
     if genome.network[i].inStatus==1 and OutCount <= #TestOutputs then
-      --update input var
-      --fitness = genome.network[i].value - TestOutputs[OutCount]
-      print("New Output"..genome.network[i].value)
-      OutCount = OutCount + 1
+      print("New ** Output"..genome.network[i].value)
+       sum = sum + genome.network[i].value
+       OutCount = OutCount + 1
       end
     end
-    end
+  --  print("net sum1: "..sum)
+    --fitness = sum
+    genome.score = sum
+  --  print("net sum2: "..genome.score)
+  end
 
 function evaluateGenome(genome)
   --obtain/update input neurons (input neurons have a state of 1)
@@ -693,15 +693,14 @@ function evaluateGenome(genome)
     --print("new neuron value".. genome.network[i].value)
     --print("new genome i/o stats".. genome.network[i].inStatus)
   end
-  pointMutateGenome(genome)
+  --pointMutateGenome(genome)
   obtainOutputs(genome)
-  if genome.mutationChance > math.random() then
-    mutateConnectionGene(genome)
-  end
-  if genome.linkMutationChance > math.random() then
-    mutateNodeGene(genome)
-  end
-
+ -- if genome.mutationChance > math.random() then
+--    mutateConnectionGene(genome)
+ -- end
+ -- if genome.linkMutationChance > math.random() then
+--    mutateNodeGene(genome)
+--  end
 end
 function createStartingPopulation(number)
   genomesCreated = {}
@@ -722,7 +721,39 @@ function createStartingPopulation(number)
   end
 InitialPopulation = createStartingPopulation(initialPopulationSize)
 --evaluate each genome in population and group into species
-generateSpecies(InitialPopulation)
+--generateSpecies(InitialPopulation)
+evaluateGenome(InitialPopulation[1])
+p1 = {}
+p2 = {}
+for i = 1,NumberOfGenerations do
+  generateSpecies(InitialPopulation)
+ -- print("gen: "..i)
+ -- print("initialPop: "..#InitialPopulation)
+  -- print("Species: "..#speciesStore[1].genomes)
+    for k = 1, #speciesStore do
+      --evaluate each genome
+      print(k)
+      for j = 1,#speciesStore[k].genomes do
+        evaluateGenome(speciesStore[k].genomes[j])
+      --  print("score in species: "..speciesStore[k].genomes[j].score)
+      end
+    end
+    for l = 1, #speciesStore do
+      calculateFitness(speciesStore[l])
+    end
+    for l = 1, #speciesStore do
+      bestGenomesForNextGeneration(speciesStore[l])
+    end
+     -- print("best genomes: "..#p1)
+     -- print("best genomes score at 1: "..p1[1].score)
+      p2 = nextGenerationMaker(p1)
+    --assign pi and p2 to initial population
+     InitialPopulation = {}
+     accumilateGenesForSorting(p1,InitialPopulation)
+     accumilateGenesForSorting(p2,InitialPopulation)
+     resetSpecies(speciesStore)
+  end
+
 --for i = 1,#speciesStore do
  print("Number of genomes in this END species: "..#speciesStore)
 --end
