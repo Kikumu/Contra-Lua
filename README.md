@@ -23,11 +23,11 @@ number of research papers which I am currently looking into and will list/credit
 7) Create crossover functions **DONE**
 8) Test crossover functions **DONE**
 9) Test crossover, mutation and networ functions **DONE**
-10) Create species function.
-11) Test species function.
-12) Create fitness calculation functions
-13) Test fitness calculation functions
-14) Run and evaluate sample generation
+10) Create species function **DONE**
+11) Test species function**DONE**
+12) Create fitness calculation functions**DONE**
+13) Test fitness calculation functions**DONE**
+14) Run and evaluate sample generation**DONE**
 15) Official test run in game
 
 
