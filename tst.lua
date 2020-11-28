@@ -46,12 +46,12 @@ genomeNodeMutationChance = 0.25
 selectionChance = 0.03 --in use
 initialPopulationSize = 100 --in use
 crossOverChance = 0.75
-NumberOfGenerations = 10
+NumberOfGenerations = 100
 --species classification variables
 disjointmentConstant = 0.2 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.1 --c3
-speciesDistance = 0.18 --in use
+speciesDistance = 0.08 --in use
 MaxNodes = 1000
 
 --E is number of disjointed connection genes
@@ -66,20 +66,12 @@ local InitialPopulation = {}
 
 
 function softMax(Outputs)
-  --val = val/sum of exp(val) entire val output net including val itself
-  end
-
-
+  --val = exp(val)/sum of exp(val) of entire val output net including val itself
+end
 
 --------------------------------------------------------------------
 
 -----------------------------------------------------------------
-
-
-
-
-
-
 
 --activation function
 function sigmoid(x)
@@ -634,6 +626,9 @@ end
   --print("net sum1: "..sum)
     --fitness = sum
     genome.score = (sum - 100)*-1
+	if genome.score < 0 then
+	genome.score = 0
+	end
     print("genome score :"..genome.score)
     --the lower the score, the better the genome
   --  print("net sum2: "..genome.score)
@@ -645,8 +640,8 @@ end
 
 function evaluateGenome(genome)
   updateInputs(genome)
-  print("NETWORK SIZE "..#genome.network)
-  print("NUMBER OF GENES IN NETWORK BEFORE EVALUATION "..#genome.genes)
+  --print("NETWORK SIZE "..#genome.network)
+  --print("NUMBER OF GENES IN NETWORK BEFORE EVALUATION "..#genome.genes)
   for i = 1, #genome.network do
     tempWout = {} --just the outs the ones we need(weights)
     oldValue = genome.network[i] --old neuron data
@@ -783,7 +778,7 @@ function bestGenomesForNextGeneration(specie)
     if i == 3 then
     break
   end
-  print("bestGenomesEvaluation")
+ -- print("bestGenomesEvaluation")
   evaluateGenome(specie.genomes[i])
   table.insert(InitialPopulation1,specie.genomes[i])
   --print("stored: "..i)
@@ -795,8 +790,8 @@ end
 --breed next generation from parent genomes
 function nextGenerationMaker(Genomes)
  -- offSprings = {}
- print("number of genomes: "..#Genomes)
- print("pop size: "..initialPopulationSize)
+--print("number of genomes: "..#Genomes)
+ --print("pop size: "..initialPopulationSize)
 for i = #Genomes,initialPopulationSize do
   g1 = Genomes[math.random(1,#Genomes)]
   g2 = Genomes[math.random(1,#Genomes)]
@@ -814,7 +809,7 @@ for i = #Genomes,initialPopulationSize do
   end
   table.insert(Genomes,g3)
 end
-print("pop size after breeding: "..#Genomes)
+--print("pop size after breeding: "..#Genomes)
 --return offSprings
 end
 
@@ -913,14 +908,24 @@ bestGenomesInAllSpecies(speciesStore) --saves in separate temp Pop
 nextGenerationMaker(InitialPopulation1)
 InitialPopulation = InitialPopulation1
 InitialPopulation1 = {}
+if i~=NumberOfGenerations then
 speciesStore = {}
+end
 end
 
 
 
-
-
-
+print("NUMBER OF SPECIES: "..#speciesStore)
+--skeet = speciesStore.genomes
+for j = 1, #speciesStore do
+print("SPECIE: "..j)
+for k = 1, #speciesStore[j].genomes do
+print("GENOME: "..k)
+for l = 1, #speciesStore[j].genomes[k].genes do
+print("weight val: "..speciesStore[j].genomes[k].genes[l].weight)
+end
+end
+end
 
 
 
