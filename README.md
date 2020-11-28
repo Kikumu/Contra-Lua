@@ -35,5 +35,5 @@ number of research papers which I am currently looking into and will list/credit
 1) http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
 2) https://www.researchgate.net/publication/223999345_Tree-Based_Indirect_Encodings_for_Evolutionary_Development_of_Neural_Networks
 3) https://www.youtube.com/watch?v=qv6UVOQ0F44 (Seth's marl/io)
-4)http://www.cs.ucf.edu/~kstanley/neat.html
+4) http://www.cs.ucf.edu/~kstanley/neat.html
 
