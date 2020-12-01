@@ -28,8 +28,8 @@ number of research papers which I am currently looking into and will list/credit
 12) Create fitness calculation functions**DONE**
 13) Test fitness calculation functions**DONE**
 14) Run and evaluate sample generation**DONE**
-15) Create stale species function(remove species which arent improving)
-16) Create function which allows only species which are doing well to breed more and not doing well to breed less.(what i have atm is that, all species are allowed to bread equivalently no matter the fitness this not very nice)
+15) Create stale species function(remove species which arent improving) **DONE**
+16) Create function which allows only species which are doing well to breed more and not doing well to breed less.(what i have atm is that, all species are allowed to bread equivalently no matter the fitness this not very nice)**DONE**
 15) Official test run in game
 
 
