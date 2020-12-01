@@ -44,14 +44,14 @@ genomeLinkMutationChance = 0.5
 genomeNodeMutationChance = 0.25
 --genomePointMutateChance = 0.4
 selectionChance = 0.03 --in use
-initialPopulationSize = 100 --in use
+initialPopulationSize = 10 --in use
 crossOverChance = 0.75
-NumberOfGenerations = 100
+NumberOfGenerations = 50
 --species classification variables
 disjointmentConstant = 0.2 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.1 --c3
-speciesDistance = 0.08 --in use
+speciesDistance = 0.18 --in use
 MaxNodes = 1000
 
 --E is number of disjointed connection genes
@@ -66,12 +66,20 @@ local InitialPopulation = {}
 
 
 function softMax(Outputs)
-  --val = exp(val)/sum of exp(val) of entire val output net including val itself
-end
+  --val = val/sum of exp(val) entire val output net including val itself
+  end
+
+
 
 --------------------------------------------------------------------
 
 -----------------------------------------------------------------
+
+
+
+
+
+
 
 --activation function
 function sigmoid(x)
@@ -590,6 +598,23 @@ genomes[maxFitnessIndex] = tempg
 end
 end
 
+function selectionSortForSpecies(speciesStore)
+--speciesFitness
+for i = 1, #speciesStore do
+maxFitnessIndex = i
+for j = i + 1, #speciesStore do
+--(low to high)
+--will now pick least fitness(closer to 100 weights sum) as highest fitness
+if speciesStore[j].speciesFitness < speciesStore[maxFitnessIndex].speciesFitness then
+maxFitnessIndex = j
+end
+end
+tempg = speciesStore[i]
+speciesStore[i] = speciesStore[maxFitnessIndex]
+speciesStore[maxFitnessIndex] = tempg
+end
+end
+
 
 
 
@@ -626,9 +651,6 @@ end
   --print("net sum1: "..sum)
     --fitness = sum
     genome.score = (sum - 100)*-1
-	if genome.score < 0 then
-	genome.score = 0
-	end
     print("genome score :"..genome.score)
     --the lower the score, the better the genome
   --  print("net sum2: "..genome.score)
@@ -640,8 +662,8 @@ end
 
 function evaluateGenome(genome)
   updateInputs(genome)
-  --print("NETWORK SIZE "..#genome.network)
-  --print("NUMBER OF GENES IN NETWORK BEFORE EVALUATION "..#genome.genes)
+  print("NETWORK SIZE "..#genome.network)
+  print("NUMBER OF GENES IN NETWORK BEFORE EVALUATION "..#genome.genes)
   for i = 1, #genome.network do
     tempWout = {} --just the outs the ones we need(weights)
     oldValue = genome.network[i] --old neuron data
@@ -760,6 +782,7 @@ end
 
 
 function bestGenomesInAllSpecies(species)
+
 for i = 1, #species do
 bestGenomesForNextGeneration(species[i])
 end
@@ -767,34 +790,76 @@ end
 
 
 
---looks at best genomes oin a single species
+--looks at best genomes in a single species and cuts out the rest
 function bestGenomesForNextGeneration(specie)
-  --InitialPopulation1 = {}
-  --pick best/fittest genomes in each species for next generation
+  --pick best/fittest genomes in each species for next generation(top 3)
+  culledGenomes = {}
   selectionSort(specie.genomes)
-  --top 5 fitness(lower fitness == better according to my current fitness func)
- -- print("bssst: "..#specie.genomes)
+--top 3 fitness(lower fitness == better according to my current fitness func)
   for i = 1,#specie.genomes do
     if i == 3 then
     break
   end
- -- print("bestGenomesEvaluation")
-  evaluateGenome(specie.genomes[i])
-  table.insert(InitialPopulation1,specie.genomes[i])
-  --print("stored: "..i)
+  table.insert(culledGenomes,specie.genomes[i]) --reworks genomes in each specie
+  table.insert(InitialPopulation1,specie.genomes[i]) --each genome selected is stored for next gen breeding
   end
---return newPopulation
+specie.genomes = culledGenomes
+
+end
+
+function selectBiasedSpeciesRandom()
+--returns a species selected at random. Species with higher fitness is favoured(probability stuff)
+chosenSpecie = {}
+completeFitness = 0
+for i = 1, #speciesStore do
+completeFitness = completeFitness + speciesStore[i].speciesFitness
+end
+
+randomSelect = math.random()*completeFitness
+
+countFit = 0
+
+for i = 1, #speciesStore do
+countFit = countFit + speciesStore[i].speciesFitness
+if countFit >= randomSelect then
+chosenSpecie = speciesStore[i]
+break
+end
+end
+return chosenSpecie
+end
+
+function selectRandomBiasedGenome(specie)
+chosenGenome = {}
+completeFitness = 0
+for i = 1, #specie.genomes do
+completeFitness = completeFitness + specie.genomes[i].fitness
+end
+
+randomSelect = math.random()*completeFitness
+
+countFit = 0
+
+for i = 1, #specie.genomes do
+countFit = countFit + specie.genomes[i].fitness
+if countFit >= randomSelect then
+chosenGenome = specie.genomes[i]
+break
+end
+end
+return chosenGenome
 end
 
 
 --breed next generation from parent genomes
 function nextGenerationMaker(Genomes)
  -- offSprings = {}
---print("number of genomes: "..#Genomes)
- --print("pop size: "..initialPopulationSize)
+ print("number of genomes: "..#Genomes)
+ print("pop size: "..initialPopulationSize)
 for i = #Genomes,initialPopulationSize do
-  g1 = Genomes[math.random(1,#Genomes)]
-  g2 = Genomes[math.random(1,#Genomes)]
+  s1 = selectBiasedSpeciesRandom()
+  g1 = selectRandomBiasedGenome(s1)
+  g2 = selectRandomBiasedGenome(s1)
 --  print("g1 network: "..#g1.network)
  -- print("g2 network: "..#g2.network)
   g3 = crossover(g2,g1)
@@ -809,7 +874,7 @@ for i = #Genomes,initialPopulationSize do
   end
   table.insert(Genomes,g3)
 end
---print("pop size after breeding: "..#Genomes)
+print("pop size after breeding: "..#Genomes)
 --return offSprings
 end
 
@@ -893,6 +958,25 @@ end
 end
 
 --generateSpecies(Genomes)
+--cullSpecies
+--eliminates the last 1/4 of species and preserves the rest
+function cullSpecies(speciesStore)
+--1/4*(n + 1) = nth first quartile term
+--so, I wanna preserve 3/4, delete the 1/4
+selectionSortForSpecies(speciesStore) --sort species first before culling
+culledSpecies = {}
+Q3 = 3/4 * (#speciesStore + 1)
+if Q3 < 1 then
+Q3 = 1
+end
+for i = 1, # speciesStore do
+if i <=Q3 then
+table.insert(culledSpecies,speciesStore[i])
+end
+end
+speciesStore = culledSpecies
+end
+
 
 
 
@@ -900,7 +984,7 @@ InitialPopulation = createStartingPopulation(initialPopulationSize)
 --evaluate each genome in population and group into species
 --generateSpecies(InitialPopulation)
 
-for i = 1, NumberOfGenerations do
+--[[for i = 1, NumberOfGenerations do
 evaluatePopulation(InitialPopulation)
 generateSpecies(InitialPopulation) --auto saves to species store
 calculateFitnessOfAllSpecies(speciesStore)
@@ -908,30 +992,19 @@ bestGenomesInAllSpecies(speciesStore) --saves in separate temp Pop
 nextGenerationMaker(InitialPopulation1)
 InitialPopulation = InitialPopulation1
 InitialPopulation1 = {}
-if i~=NumberOfGenerations then
+speciesStore = {}
+end]]
+
+----------------------V2
+
+for i = 1,NumberOfGenerations do
+evaluatePopulation(InitialPopulation)
+generateSpecies(InitialPopulation)
+calculateFitnessOfAllSpecies(speciesStore)
+cullSpecies(speciesStore)
+bestGenomesInAllSpecies(speciesStore) --culls out weak genomes in each species and selects top 3, best genomes stored for next gen
+nextGenerationMaker(InitialPopulation1)
+InitialPopulation = InitialPopulation1
+InitialPopulation1 = {}
 speciesStore = {}
 end
-end
-
-
-
-print("NUMBER OF SPECIES: "..#speciesStore)
---skeet = speciesStore.genomes
-for j = 1, #speciesStore do
-print("SPECIE: "..j)
-for k = 1, #speciesStore[j].genomes do
-print("GENOME: "..k)
-for l = 1, #speciesStore[j].genomes[k].genes do
-print("weight val: "..speciesStore[j].genomes[k].genes[l].weight)
-end
-end
-end
-
-
-
-
-
-
-
-
-
