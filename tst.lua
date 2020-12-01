@@ -42,7 +42,7 @@ genomeMutationChance = 0.52
 genomeActivationChance = 0.45
 genomeLinkMutationChance = 0.35
 genomeNodeMutationChance = 0.41
-genomeStepValue = 0.85
+genomeStepValue = 1.5
 
 --genomePointMutateChance = 0.4
 selectionChance = 0.3 --in use
@@ -800,7 +800,7 @@ function bestGenomesForNextGeneration(specie)
   selectionSort(specie.genomes)
 --top 3 fitness(lower fitness == better according to my current fitness func)
   for i = 1,#specie.genomes do
-    if i == 5 then
+    if i == 10 then
     break
   end
   table.insert(culledGenomes,specie.genomes[i]) --reworks genomes in each specie
@@ -818,14 +818,21 @@ for i = 1, #speciesStore do
 completeFitness = completeFitness + speciesStore[i].speciesFitness
 end
 
+print("CPS: "..completeFitness)
+
 randomSelect = math.random()*completeFitness
+
+print("CPSRSV: "..randomSelect)
+
 
 countFit = 0
 
 for i = 1, #speciesStore do
 countFit = countFit + speciesStore[i].speciesFitness
-if countFit >= randomSelect then
+--PROBABILITY SHIT (I FLIPPED THE SIGN. SPECIES WITH A LOWER FITNESS SCORE ARE MORE LIKEL TO BE SELECTED. THIS SIGN WILL BE FLIPPED DEPENDING ON FITNESS FUNC)
+if countFit <= randomSelect then
 chosenSpecie = speciesStore[i]
+print("SPECIES CHOSEN")
 break
 end
 end
@@ -839,20 +846,22 @@ for i = 1, #specie.genomes do
 completeFitness = completeFitness + specie.genomes[i].fitness
 end
 
+print("CPG: "..completeFitness)
+
 randomSelect = math.random()*completeFitness
+
+print("CPGRSV: "..randomSelect)
 
 countFit = 0
 
 for i = 1, #specie.genomes do
 countFit = countFit + specie.genomes[i].fitness
-if countFit >= randomSelect then
+--PROBABILITY SHIT (I FLIPPED THE SIGN. GENOMES WITH A LOWER FITNESS SCORE ARE MORE LIKEL TO BE SELECTED. THIS SIGN( < OR >) WILL BE FLIPPED DEPENDING ON FITNESS FUNC)
+if countFit <= randomSelect then
 chosenGenome = specie.genomes[i]
---print("GENOME CHOSEN"..#chosenGenome.genes)
+print("GENOME CHOSEN")
 break
 end
-end
-if chosenGenome == nil then
-  print("chosenGenomevalue is nil")
 end
 
 return chosenGenome
