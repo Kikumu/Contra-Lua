@@ -48,7 +48,7 @@ genomeStepValue = 0.85
 selectionChance = 0.03 --in use
 initialPopulationSize = 150 --in use
 crossOverChance = 0.75
-NumberOfGenerations = 100
+NumberOfGenerations = 10
 --species classification variables
 disjointmentConstant = 0.25 --c1
 excessGenesConstant = 0.3 --c2
