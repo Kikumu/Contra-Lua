@@ -37,12 +37,12 @@ speciesStore = {}
 --GEN --SPECIES--GENOME
 --geneActivationChance = 0.3
 genomeFlipChance = 0.45
-genomeDecrementChance = 0.25
+genomeDecrementChance = 0.45
 genomeMutationChance = 0.52
 genomeActivationChance = 0.45
 genomeLinkMutationChance = 0.35
 genomeNodeMutationChance = 0.41
-genomeStepValue = 1.5
+genomeStepValue = 0.55
 
 --genomePointMutateChance = 0.4
 selectionChance = 0.3 --in use
@@ -52,8 +52,8 @@ NumberOfGenerations = 100
 --species classification variables
 disjointmentConstant = 0.25 --c1
 excessGenesConstant = 0.3 --c2
-weightImportanceConstant = 0.35 --c3
-speciesDistance = 0.30 --in use
+weightImportanceConstant = 0.25 --c3
+speciesDistance = 0.70 --in use
 MaxNodes = 100
 MaxLinks = 30
 --E is number of disjointed connection genes
@@ -651,10 +651,18 @@ end
   --print("net sum1: "..sum)
     --fitness = sum
     genome.score = (sum - 100)*-1
+	if genome.score < 0 then
+	genome.score = 100
+	print("Too negative")
+	end
+	if genome.score > 100 then
+	genome.score = 100
+	print("Too positive")
+	end
 	--if #genome.network > MaxNodes then
 	--genome.score = 100
 	--end
-    --print("genome score :"..genome.score)
+    print("genome score :"..genome.score)
     --the lower the score, the better the genome
   --  print("net sum2: "..genome.score)
   end
@@ -807,7 +815,7 @@ function bestGenomesForNextGeneration(specie)
   table.insert(InitialPopulation1,specie.genomes[i]) --each genome selected is stored for next gen breeding
   end
 specie.genomes = culledGenomes
-
+print("First 10 genomes picked")
 end
 
 function selectBiasedSpeciesRandom()
@@ -816,6 +824,9 @@ chosenSpecie = {}
 completeFitness = 0
 for i = 1, #speciesStore do
 completeFitness = completeFitness + speciesStore[i].speciesFitness
+if next(speciesStore[i].genomes) == nil then
+--print("This species has no genomes in select biased. This either means, 1) there was a species created but the genomes were not added")
+end
 end
 
 print("CPS: "..completeFitness)
@@ -835,6 +846,12 @@ chosenSpecie = speciesStore[i]
 print("SPECIES CHOSEN")
 break
 end
+end
+if #speciesStore < 2 then
+chosenSpecie = speciesStore[1]
+end
+if next(chosenSpecie) == nil then
+print("Chosen species is empty. No species was able to meet ther random threshold")
 end
 return chosenSpecie
 end
@@ -860,6 +877,7 @@ countFit = countFit + specie.genomes[i].fitness
 if countFit <= randomSelect then
 chosenGenome = specie.genomes[i]
 print("GENOME CHOSEN")
+print(#specie.genomes[i].genes)
 break
 end
 end
@@ -871,17 +889,34 @@ end
 --breed next generation from parent genomes
 function nextGenerationMaker(Genomes)
  -- offSprings = {}
- --print("number of genomes: "..#Genomes)
+ print("number of genomes: "..#Genomes)
+ --I GET IT NOW...IT DOESNT BREED OR ANYTHING BECAUSE NUMBER OF SPECIES > = POP SIZE
  --print("pop size: "..initialPopulationSize)
 for i = #Genomes,initialPopulationSize do
   s1 = selectBiasedSpeciesRandom()
+  if next(s1) == nil then
+  print("RECOGNIZED")
+  end
+  if next(s1)~=nil then
   g1 = selectRandomBiasedGenome(s1)
+  print("picked p1")
+  else
+  g1 = {}
+  print("Species didnt meet threshold")
+  end
+  print("G1 DONE")
+  if next(s1)~=nil then
   g2 = selectRandomBiasedGenome(s1)
+  print("picked p2")
+  else
+  print("Species didnt meet threshold")
+  end
 --print("g1 network: "..#g1.network)
 --print("g2 network: "..#g2.network)
-if #g1.genes == 0 or #g2.genes == 0 then
-print("One of us is barren for some reason :(")
+if next(g1) == nil or next(g2) == nil then
+print("One of us is barren because the expected random multiple threshold was not met :(")
 else
+  print("breeding............")
   if g1.fitness < g2.fitness then
   g3 = crossover(g1,g2)
   else
@@ -998,7 +1033,14 @@ end
 for i = 1, # speciesStore do
 if i <=Q3 then
 table.insert(culledSpecies,speciesStore[i])
+--print("Specie picked")
 end
+
+if next(speciesStore[i].genomes) == nil then
+print("This species has no genomes. This either means, 1) there was a species created but the genomes were not added")
+end
+
+
 end
 speciesStore = culledSpecies
 end
@@ -1007,19 +1049,6 @@ end
 
 
 InitialPopulation = createStartingPopulation(initialPopulationSize)
---evaluate each genome in population and group into species
---generateSpecies(InitialPopulation)
-
---[[for i = 1, NumberOfGenerations do
-evaluatePopulation(InitialPopulation)
-generateSpecies(InitialPopulation) --auto saves to species store
-calculateFitnessOfAllSpecies(speciesStore)
-bestGenomesInAllSpecies(speciesStore) --saves in separate temp Pop
-nextGenerationMaker(InitialPopulation1)
-InitialPopulation = InitialPopulation1
-InitialPopulation1 = {}
-speciesStore = {}
-end]]
 
 ----------------------V2---------------------------------------------------------------------
 
