@@ -36,25 +36,25 @@ print("Species first :"..#speciesStore)
 --used to create species
 --GEN --SPECIES--GENOME
 --geneActivationChance = 0.3
-genomeFlipChance = 0.27
+genomeFlipChance = 0.20
 genomeDecrementChance = 0.35
 genomeMutationChance = 0.5
 genomeActivationChance = 0.25
 genomeLinkMutationChance = 0.5
 genomeNodeMutationChance = 0.35
-genomeStepValue = 0.75
+genomeStepValue = 0.85
 
 --genomePointMutateChance = 0.4
 selectionChance = 0.03 --in use
-initialPopulationSize = 10 --in use
+initialPopulationSize = 150 --in use
 crossOverChance = 0.75
 NumberOfGenerations = 100
 --species classification variables
 disjointmentConstant = 0.25 --c1
 excessGenesConstant = 0.3 --c2
 weightImportanceConstant = 0.35 --c3
-speciesDistance = 0.20 --in use
-MaxNodes = 10
+speciesDistance = 0.30 --in use
+MaxNodes = 100
 MaxLinks = 30
 --E is number of disjointed connection genes
 --D is number of excess connection genes
@@ -654,7 +654,7 @@ end
   --print("net sum1: "..sum)
     --fitness = sum
     genome.score = (sum - 100)*-1
-	if #genome.genes > MaxLinks then
+	if #genome.network > MaxNodes then
 	genome.score = 100
 	end
     print("genome score :"..genome.score)
@@ -850,7 +850,7 @@ for i = 1, #specie.genomes do
 countFit = countFit + specie.genomes[i].fitness
 if countFit >= randomSelect then
 chosenGenome = specie.genomes[i]
-print("GENOME CHOSEN")
+print("GENOME CHOSEN"..#chosenGenome.genes)
 break
 end
 end
@@ -869,7 +869,15 @@ for i = #Genomes,initialPopulationSize do
   g2 = selectRandomBiasedGenome(s1)
 --  print("g1 network: "..#g1.network)
  -- print("g2 network: "..#g2.network)
+if #g1.genes == 0 or #g2.genes == 0 then
+print("One of us is barren for some reason :(")
+else
+  if g1.fitness < g2.fitness then
+  g3 = crossover(g1,g2)
+  else
   g3 = crossover(g2,g1)
+  end
+  g3 = crossover(g1,g2)
   pointMutateGenome(g3)
   if g3.mutationChance > math.random() then
    if g3.nodeMutationChance > math.random() then
@@ -880,6 +888,7 @@ for i = #Genomes,initialPopulationSize do
   end
   end
   table.insert(Genomes,g3)
+end
 end
 print("pop size after breeding: "..#Genomes)
 --return offSprings
