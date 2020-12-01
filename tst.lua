@@ -32,23 +32,23 @@ TestOutputs1[2] = 10
 
 --stores all species
 speciesStore = {}
-print("Species first :"..#speciesStore)
+--print("Species first :"..#speciesStore)
 --used to create species
 --GEN --SPECIES--GENOME
 --geneActivationChance = 0.3
-genomeFlipChance = 0.20
-genomeDecrementChance = 0.35
-genomeMutationChance = 0.5
-genomeActivationChance = 0.25
-genomeLinkMutationChance = 0.5
-genomeNodeMutationChance = 0.35
+genomeFlipChance = 0.45
+genomeDecrementChance = 0.25
+genomeMutationChance = 0.52
+genomeActivationChance = 0.45
+genomeLinkMutationChance = 0.35
+genomeNodeMutationChance = 0.41
 genomeStepValue = 0.85
 
 --genomePointMutateChance = 0.4
-selectionChance = 0.03 --in use
+selectionChance = 0.3 --in use
 initialPopulationSize = 150 --in use
 crossOverChance = 0.75
-NumberOfGenerations = 10
+NumberOfGenerations = 100
 --species classification variables
 disjointmentConstant = 0.25 --c1
 excessGenesConstant = 0.3 --c2
@@ -214,40 +214,40 @@ end
 
 function pointMutateGenome(genome)
 --mutateState = 0
-print("S "..#genome.genes)
-print("F"..genome.flipSign)
-print("W"..genome.weightDecrementChance)
-print("A"..genome.activationChance)
+--print("S "..#genome.genes)
+--print("F"..genome.flipSign)
+--print("W"..genome.weightDecrementChance)
+--print("A"..genome.activationChance)
 
-print("number of genes in pointMutate Before: "..#genome.genes)
+--print("number of genes in pointMutate Before: "..#genome.genes)
   for i = 1, #genome.genes do
     if genome.flipSign > math.random() then
-      genome.genes[i].weight = -genome.genes[i].weight
-	  print("Sign flipped")
+      genome.genes[i].weight = genome.genes[i].weight * -1
+	  --print("Sign flipped")
       break
     end
     if genome.weightDecrementChance > math.random() then
 	 genome.genes[i].weight = genome.genes[i].weight - (genome.genes[i].weight * genome.step)
-	  print("Weight decrement")
+	  --print("Weight decrement")
       break
 
    else
 	   genome.genes[i].weight = genome.genes[i].weight + (genome.genes[i].weight * genome.step)
-	 print("Weight increment")
+	 --print("Weight increment")
      break
     end
 
     if genome.activationChance > math.random() then
       genome.genes[i].status = true
-	  print("gene enabled")
+	 -- print("gene enabled")
       break
     else
       genome.genes[i].status = false
-	   print("gene disabled")
+	 --  print("gene disabled")
       break
     end
   end
-print("number of genes in pointMutate After: "..#genome.genes)
+--print("number of genes in pointMutate After: "..#genome.genes)
 end
 
 
@@ -357,37 +357,34 @@ end
 
 function crossover(genome1,genome2) --genome in the sense that you are passing to this function a set of genomes
 matched = matchingGenes(genome1,genome2)
---print("number of matching neurons: "..#n1)
-print("number of matching genes: "..#matched)
+--print("number of matching genes: "..#matched)
 disjointed = disjointGenes(genome1,genome2)
---print("number of disjoint neurons: "..#n2)
-print("number of disjoint genes: "..#disjointed)
+--print("number of disjoint genes: "..#disjointed)
 excess = excessGenes(genome1,genome2)
---print("number of excess neurons: "..#n3)
-print("number of excess genes: "..#excess)
+--print("number of excess genes: "..#excess)
 --extract neurons from genes and put in a network
 genes = arrayCombinerForCrossover(matched,disjointed,excess)
 --genome.network = nT1
 --print("number of all genes: "..#genes)
 
 genome = BuildNetworkOfChildGene(genes)
-print("Crossover genes number before: "..#genome.genes)
+--print("Crossover genes number before: "..#genome.genes)
 
 if genome.mutationChance > math.random() then
-print("Point mutate attempt")
+--print("Point mutate attempt")
 pointMutateGenome(genome)
 --print("pintMutate")
 end
 if genome.linkMutationChance > math.random() then
-print("ConnectMutate Attempt")
+--print("ConnectMutate Attempt")
 mutateConnectionGene(genome)
 end
 if genome.nodeMutationChance > math.random() then
-print("NodeMutate Attempt")
+--print("NodeMutate Attempt")
 mutateNodeGene(genome)
 end
 
-print("Crossover genes number after mutations: "..#genome.genes)
+--print("Crossover genes number after mutations: "..#genome.genes)
 return genome
 end
 
@@ -401,7 +398,7 @@ function BuildNetworkOfChildGene(gene)
   neurons2 = {}
   genome = createNewGenome()
   --connect/create inputs
-  print ("number of genes in child before in BuildChildNetwork "..#gene)
+  --print ("number of genes in child before in BuildChildNetwork "..#gene)
   for i = 1, #TestInputs do
     TempInput = newNeuron()
     --how many in gene are connected to this one?
@@ -473,7 +470,7 @@ end
     end
     genome.genes = gene
     --genome.genes = copyGene(gene)
-    print("number of genes in child after in BuildChildNetwork"..#genome.genes)
+    --print("number of genes in child after in BuildChildNetwork"..#genome.genes)
     return genome
   end
 
@@ -654,10 +651,10 @@ end
   --print("net sum1: "..sum)
     --fitness = sum
     genome.score = (sum - 100)*-1
-	if #genome.network > MaxNodes then
-	genome.score = 100
-	end
-    print("genome score :"..genome.score)
+	--if #genome.network > MaxNodes then
+	--genome.score = 100
+	--end
+    --print("genome score :"..genome.score)
     --the lower the score, the better the genome
   --  print("net sum2: "..genome.score)
   end
@@ -668,8 +665,8 @@ end
 
 function evaluateGenome(genome)
   updateInputs(genome)
-  print("NETWORK SIZE "..#genome.network)
-  print("NUMBER OF GENES IN NETWORK BEFORE EVALUATION "..#genome.genes)
+  --print("NETWORK SIZE "..#genome.network)
+  --print("NUMBER OF GENES IN NETWORK BEFORE EVALUATION "..#genome.genes)
   for i = 1, #genome.network do
     tempWout = {} --just the outs the ones we need(weights)
     oldValue = genome.network[i] --old neuron data
@@ -695,7 +692,7 @@ function evaluateGenome(genome)
         end
   end
   obtainOutputs(genome)
-  print("NUMBER OF GENES IN NETWORK AFTER EVALUATION "..#genome.genes)
+  --print("NUMBER OF GENES IN NETWORK AFTER EVALUATION "..#genome.genes)
 end
 
 
@@ -803,7 +800,7 @@ function bestGenomesForNextGeneration(specie)
   selectionSort(specie.genomes)
 --top 3 fitness(lower fitness == better according to my current fitness func)
   for i = 1,#specie.genomes do
-    if i == 3 then
+    if i == 5 then
     break
   end
   table.insert(culledGenomes,specie.genomes[i]) --reworks genomes in each specie
@@ -850,10 +847,14 @@ for i = 1, #specie.genomes do
 countFit = countFit + specie.genomes[i].fitness
 if countFit >= randomSelect then
 chosenGenome = specie.genomes[i]
-print("GENOME CHOSEN"..#chosenGenome.genes)
+--print("GENOME CHOSEN"..#chosenGenome.genes)
 break
 end
 end
+if chosenGenome == nil then
+  print("chosenGenomevalue is nil")
+end
+
 return chosenGenome
 end
 
@@ -861,14 +862,14 @@ end
 --breed next generation from parent genomes
 function nextGenerationMaker(Genomes)
  -- offSprings = {}
- print("number of genomes: "..#Genomes)
- print("pop size: "..initialPopulationSize)
+ --print("number of genomes: "..#Genomes)
+ --print("pop size: "..initialPopulationSize)
 for i = #Genomes,initialPopulationSize do
   s1 = selectBiasedSpeciesRandom()
   g1 = selectRandomBiasedGenome(s1)
   g2 = selectRandomBiasedGenome(s1)
---  print("g1 network: "..#g1.network)
- -- print("g2 network: "..#g2.network)
+--print("g1 network: "..#g1.network)
+--print("g2 network: "..#g2.network)
 if #g1.genes == 0 or #g2.genes == 0 then
 print("One of us is barren for some reason :(")
 else
@@ -890,7 +891,7 @@ else
   table.insert(Genomes,g3)
 end
 end
-print("pop size after breeding: "..#Genomes)
+--print("pop size after breeding: "..#Genomes)
 --return offSprings
 end
 
@@ -936,11 +937,11 @@ function generateSpecies(Genomes)
     end
   else
     --if species is nill, create one
-    print("no species in species store")
+    --print("no species in species store")
     initializeSpecies(Genomes[i])
     end
   end
-  print("Species foind: "..#speciesStore)
+  --print("Species foind: "..#speciesStore)
   end
 
 
@@ -1011,9 +1012,10 @@ InitialPopulation1 = {}
 speciesStore = {}
 end]]
 
-----------------------V2
+----------------------V2---------------------------------------------------------------------
 
 for i = 1,NumberOfGenerations do
+print("GENERATION: "..i)
 evaluatePopulation(InitialPopulation)
 generateSpecies(InitialPopulation)
 calculateFitnessOfAllSpecies(speciesStore)
@@ -1022,12 +1024,14 @@ bestGenomesInAllSpecies(speciesStore) --culls out weak genomes in each species a
 nextGenerationMaker(InitialPopulation1)
 InitialPopulation = InitialPopulation1
 InitialPopulation1 = {}
+print("NUMBER OF SPECIES: "..#speciesStore)
 if i~=NumberOfGenerations then
 speciesStore = {}
 end
 end
 
 print("NUMBER OF SPECEIES: "..#speciesStore)
+print("SPECIES WITH HIGHEST FITNESS: "..speciesStore[1].speciesFitness)
 for j = 1,#speciesStore do
 for  k = 1, #speciesStore[j].genomes do
 for l = 1, #speciesStore[j].genomes[k].genes do
