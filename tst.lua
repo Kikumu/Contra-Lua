@@ -42,6 +42,8 @@ genomeMutationChance = 0.5
 genomeActivationChance = 0.25
 genomeLinkMutationChance = 0.5
 genomeNodeMutationChance = 0.35
+genomeStepValue = 0.75
+
 --genomePointMutateChance = 0.4
 selectionChance = 0.03 --in use
 initialPopulationSize = 10 --in use
@@ -495,7 +497,7 @@ function createNewGenome()
   genome.weightDecrementChance = genomeDecrementChance
   genome.linkMutationChance = genomeLinkMutationChance
   genome.nodeMutationChance  = genomeNodeMutationChance
-  genome.step = math.random(0.5,1.5)
+  genome.step = genomeStepValue
   return genome
 end
 
