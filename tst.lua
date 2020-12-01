@@ -36,24 +36,24 @@ print("Species first :"..#speciesStore)
 --used to create species
 --GEN --SPECIES--GENOME
 --geneActivationChance = 0.3
-genomeFlipChance = 0.2
-genomeDecrementChance = 0.2
-genomeMutationChance = 0.3
+genomeFlipChance = 0.27
+genomeDecrementChance = 0.35
+genomeMutationChance = 0.5
 genomeActivationChance = 0.25
 genomeLinkMutationChance = 0.5
-genomeNodeMutationChance = 0.25
+genomeNodeMutationChance = 0.35
 --genomePointMutateChance = 0.4
 selectionChance = 0.03 --in use
 initialPopulationSize = 10 --in use
 crossOverChance = 0.75
-NumberOfGenerations = 50
+NumberOfGenerations = 100
 --species classification variables
-disjointmentConstant = 0.2 --c1
+disjointmentConstant = 0.25 --c1
 excessGenesConstant = 0.3 --c2
-weightImportanceConstant = 0.1 --c3
-speciesDistance = 0.18 --in use
-MaxNodes = 1000
-
+weightImportanceConstant = 0.35 --c3
+speciesDistance = 0.20 --in use
+MaxNodes = 10
+MaxLinks = 30
 --E is number of disjointed connection genes
 --D is number of excess connection genes
 --W is weight value
@@ -225,13 +225,14 @@ print("number of genes in pointMutate Before: "..#genome.genes)
       break
     end
     if genome.weightDecrementChance > math.random() then
-     genome.genes[i].weight = genome.genes[i].weight - (genome.genes[i].weight * genome.step)
-	 print("Weight increment")
-     break
-   else
-      genome.genes[i].weight = genome.genes[i].weight * genome.step
+	 genome.genes[i].weight = genome.genes[i].weight - (genome.genes[i].weight * genome.step)
 	  print("Weight decrement")
       break
+
+   else
+	   genome.genes[i].weight = genome.genes[i].weight + (genome.genes[i].weight * genome.step)
+	 print("Weight increment")
+     break
     end
 
     if genome.activationChance > math.random() then
@@ -651,6 +652,9 @@ end
   --print("net sum1: "..sum)
     --fitness = sum
     genome.score = (sum - 100)*-1
+	if #genome.genes > MaxLinks then
+	genome.score = 100
+	end
     print("genome score :"..genome.score)
     --the lower the score, the better the genome
   --  print("net sum2: "..genome.score)
@@ -844,6 +848,7 @@ for i = 1, #specie.genomes do
 countFit = countFit + specie.genomes[i].fitness
 if countFit >= randomSelect then
 chosenGenome = specie.genomes[i]
+print("GENOME CHOSEN")
 break
 end
 end
@@ -1006,5 +1011,16 @@ bestGenomesInAllSpecies(speciesStore) --culls out weak genomes in each species a
 nextGenerationMaker(InitialPopulation1)
 InitialPopulation = InitialPopulation1
 InitialPopulation1 = {}
+if i~=NumberOfGenerations then
 speciesStore = {}
+end
+end
+
+print("NUMBER OF SPECEIES: "..#speciesStore)
+for j = 1,#speciesStore do
+for  k = 1, #speciesStore[j].genomes do
+for l = 1, #speciesStore[j].genomes[k].genes do
+print("WEIGHT VALUE: "..speciesStore[j].genomes[k].genes[l].weight)
+end
+end
 end
