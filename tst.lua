@@ -11,7 +11,6 @@ TO DO:
 9) Integrate to game
 10) crossover hard test......done
 ]]
-local InitialPopulation = {}
 local InitialPopulation1 = {}
 local TestInputs = {}
 TestInputs[1] = 1
@@ -65,39 +64,20 @@ MaxLinks = 30
 local InitialPopulation = {}
 
 
-
-
 function softMax(Outputs)
   --val = val/sum of exp(val) entire val output net including val itself
   end
-
-
-
---------------------------------------------------------------------
-
------------------------------------------------------------------
-
-
-
-
-
-
 
 --activation function
 function sigmoid(x)
     return 1.0 / (1.0 + math.exp(-x))
 end
 
-
-
-
-
-
 function connectionGene()
 local gene = {}
-gene.input = 0
+gene.in = 0
 gene.out = 0
-gene.weight = math.random()
+gene.weight = 0
 gene.status = true
 gene.innovation = 0 --ancestry monitor
 return gene
@@ -111,8 +91,7 @@ end
 
 --tested(needs reviewing) --TESTED AND REWORKED
 function mutateConnectionGene(genome)
-
-max = retunMaxInnovation(genome)
+max = genome.maxInnovation
 --grab 2 random nodes from network
 v1 = math.random(1,#genome.network)
 v2 = math.random(1,#genome.network)
@@ -120,6 +99,23 @@ v2 = math.random(1,#genome.network)
 node1 = genome.network[v1] --1
 node2 = genome.network[v2] --1
 --loop through the 4 neurons and check if same innov number
+if genome.network[v1].inStatus == 0 and enome.network[v2].inStatus == 0 then
+  print("neurons are both input neurons")
+  return 0
+end
+
+if genome.network[v1].inStatus == 1 and enome.network[v2].inStatus == 1 then
+  print("neurons are both output neurons")
+  return 0
+end
+
+for key in genome.network[v1].geneInnovationIndex do
+  if genome.network[v2].geneInnovationIndex[key]~=nil then
+    print("Found matching gene")
+    return  0
+  end
+end
+
 state1 = 0
 state2 = 0
 state3 = 0
@@ -208,151 +204,60 @@ table.insert(genome.genes,connectionGeneMutate2)
 end
 
 
-
-
-
-
 function pointMutateGenome(genome)
---mutateState = 0
---print("S "..#genome.genes)
---print("F"..genome.flipSign)
---print("W"..genome.weightDecrementChance)
---print("A"..genome.activationChance)
-
---print("number of genes in pointMutate Before: "..#genome.genes)
   for i = 1, #genome.genes do
-    if genome.flipSign > math.random() then
-      genome.genes[i].weight = genome.genes[i].weight * -1
-	  --print("Sign flipped")
-      break
-    end
-    if genome.weightDecrementChance > math.random() then
-	 genome.genes[i].weight = genome.genes[i].weight - (genome.genes[i].weight * genome.step)
-	  --print("Weight decrement")
-      break
-
-   else
-	   genome.genes[i].weight = genome.genes[i].weight + (genome.genes[i].weight * genome.step)
-	 --print("Weight increment")
-     break
-    end
-
-    if genome.activationChance > math.random() then
-      genome.genes[i].status = true
-	 -- print("gene enabled")
-      break
+    if genome.Perturbance > math.random() then
+      genome.genes[i].weight = genome.genes[i].weight + math.random() * genome.step*2.0 - genome.step
     else
-      genome.genes[i].status = false
-	 --  print("gene disabled")
-      break
+      genome.genes[i].weight = math.random() * 4.0 - 2.0
     end
-  end
---print("number of genes in pointMutate After: "..#genome.genes)
 end
-
-
-
-
---for crossover purposes(Goal is to add to g1)tested--TESTED AND REWORKED
+end
 function matchingGenes(genome1,genome2)
-  --genes in which innovations match
-  matchedGenes = {}
-  for i = 1, #genome1.genes do
-    for j = 1, #genome2.genes do
-      if genome1.genes[i].innovation == genome2.genes[j].innovation then
-        if selectionChance > math.random() then
-           table.insert(matchedGenes,genome1.genes[i])
-        else
-          table.insert(matchedGenes,genome2.genes[j])
+  matches = 0
+  sum_ = 0
+  for innovation in genome1.genes do
+    if genome2.genes[innovation]~=nil then
+      if selectionChance > math.random() then
+        matches = matches + 1
+        sum_ = sum_ + math.abs(genome1.genes[i].weight - genome2.genes[i].weight)
+      else
+        matches = matches + 1
+        sum_ = sum_ + math.abs(genome1.genes[i].weight - genome2.genes[i].weight)
         end
       end
     end
-  end
-  return matchedGenes
+  average = sum_/matches
+  return matches,average
 end
 --(takes disjointed genes from g2), goal is to add to G1
 --the genes in the middle
 
 
-
-
-
 function disjointGenes(genome1,genome2)
-disjointedGenes = {}
-max = retunMaxInnovation(genome1)
-max2 = retunMaxInnovation(genome2)
---print("max in genome1 "..max)
---print("max in genome2 "..max2)
-found = 0
-excess = 0
-for i = 1, #genome1.genes do
-  found = 0
-  excess = 0
-  for j = 1, #genome2.genes do
-    if genome2.genes[j].innovation <= max and genome1.genes[i].innovation == genome2.genes[j].innovation then
-      found = 1
-    end
-    if genome2.genes[j].innovation  > max and found == 0 then
-      excess = 1
-    end
-  end
-  if found == 0 and excess == 0 then
-    table.insert(disjointedGenes,genome2.genes[i])
+max = genome1.maxInnovation
+max2 = genome2.maxInnovation
+maximum = math.max(max,max2)
+disjoints = 0
+
+for innovation in genome1.genes do
+  if genome2.genes[innovation]==nil and innovation <= genome1.maxInnovation then
+    disjoints = disjoints + 1
   end
 end
-return disjointedGenes
+return disjoints
 end
-
-
-
-
 
 function excessGenes(genome1,genome2)
-ExcessGenesTable = {}
-max = retunMaxInnovation(genome1)
-
-  for j = 1, #genome2.genes do
-    if genome2.genes[j].innovation > max then
-      table.insert(ExcessGenesTable,genome2.genes[j])
+max = genome1.maxInnovation
+excess = 0
+  for innovation in genome2.genes do
+    if innovation > max then
+      excess = excess + 1
       end
   end
-return ExcessGenesTable
+return excess
 end
-
-
-
-
-
-
-function accumilateGenesForSorting(genes,tbs)
-  for i = 1, #genes do
-    table.insert(tbs,genes[i])
-  end
-  return tbs
-end
-
-
-
-
-
-
---sorted child gene according to innovation number
-function arrayCombinerForCrossover(DisjointedGenesArr, ExcessGenesArr, MatchingGenesArr)
---genome = createNewGenome()
-genesToSort = {}
-accumilateGenesForSorting(DisjointedGenesArr,genesToSort)
-accumilateGenesForSorting(ExcessGenesArr,genesToSort)
-accumilateGenesForSorting(MatchingGenesArr,genesToSort)
---genome.genes = genesToSort
-return genesToSort
-end
-
-
-
-
-
-
-
 
 
 function crossover(genome1,genome2) --genome in the sense that you are passing to this function a set of genomes
@@ -474,20 +379,19 @@ end
     return genome
   end
 
-
-
-
-
-
-
-
 --neurons should match with innovation number
+
+
+
 function createNewGenome()
   genome = {} --holds the gene information network (general info)
   genome.genes = {} --weight info (connection genes info)
   genome.fitness = 0 --genome raw score/avarage number of genomes in species
   genome.network = {} --holds neurons
   genome.score = 0 --genome raw score
+  genome.Fitness = 0
+  genome.maxInnovation = 0
+  genome.maxNeuron = 0
   genome.mutationChance = genomeMutationChance
   genome.flipSign = genomeFlipChance
   genome.activationChance = genomeActivationChance
@@ -498,62 +402,40 @@ function createNewGenome()
   return genome
 end
 
-
-
-
-
-
-
  function newNeuron()
 	local neuron = {}
-  neuron.weightIndex = {} --stores innovation number of the connection gene its connected to
-  neuron.inStatus = 2 --0 if an input 1 if an output (matches with node array index) 2 if normal neuron
+  neuron.geneInnovationIndex = {} --stores innovation number of the connection gene its connected to
+  neuron.inStatus = 0 --0 if an input 1 if an output (matches with node array index) 2 if normal neuron
   neuron.inputNumber = 0 --this is just for monitoring it on input nodes its not used anywhere else
 	neuron.value = 0.0 -- current neuron value
 	return neuron
 end
 
---gene.input = 0
---gene.out = 0
---gene.weight = math.random()
---gene.status = true
---gene.innovation = 0 --ancestry monitor
-
---you only need to do this ONCE per genome initialization
-
-
-
-
-
-
-
-
 
 
  function BuildNetwork(genome)
   innovationNumber = 1
+  maxNeuron = 1
   --add neurons
   for c=1, #TestOutputs do
     tempO = newNeuron()
-    tempO.value = TestOutputs[c]
     tempO.inStatus = 1 --signifies output neuron
     tempO.inputNumber = c
-    table.insert(genome.network,tempO)
+    genome.network[maxNeuron] = tempO
+    maxNeuron = maxNeuron + 1
   end
 
 	for i=1,#TestInputs do
     tempN = newNeuron()
-    tempN.value = TestInputs[i]
     tempN.inStatus = 0 --signifies input neuron
     tempN.inputNumber = i
-    --where you make a connection gene is where u need to put innovation numbers
     for j = 1, #TestOutputs do
-    --create gene and link innovation number
     tempConnectionGene = connectionGene()
-    tempConnectionGene.input = tempN
+    tempConnectionGene.input = maxNeuron
     tempConnectionGene.innovation = innovationNumber
-    randN = math.random()
-    --print("random value "..randN)
+    tempConnectionGene.out = j
+    table.insert(genome.network[maxNeuron].geneInnovationIndex, tempConnectionGene.innovation)
+    table.insert(genome.network[j].geneInnovationIndex, tempConnectionGene.innovation)
     if  genome.activationChance > math.random() then
       tempConnectionGene.status = true
      -- print("One or more of connection genes are enabled")
@@ -561,25 +443,15 @@ end
       tempConnectionGene.status = false
      -- print("One or more of connection genes are disabled")
     end
-    --call network
-    tempConnectionGene.out = genome.network[j]
-    --add connection gene
-    table.insert(tempConnectionGene.out.weightIndex,innovationNumber)
-    --reassign
-    genome.network[j] = tempConnectionGene.out
-    table.insert(tempN.weightIndex,innovationNumber)
-    table.insert(genome.genes,tempConnectionGene)
+    genome.genes[tempConnectionGene.innovation] = tempConnectionGene
+    genome.maxInnovaion = tempConnectionGene.innovation
     innovationNumber = innovationNumber + 1
-    end
-    table.insert(genome.network,tempN)
+  end
+  genome.network[maxNeuron] = tempN
+  genome.maxNeuron = maxNeuron
+  maxNeuron = maxNeuron + 1
 	end
 end
-
-
-
-
-
-
 
 function selectionSort(genomes)
 --sort by fitness
