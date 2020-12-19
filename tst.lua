@@ -110,11 +110,11 @@ if genome.network[v1].inStatus ~= genome.network[v2].inStatus then
   v1 = false
   v2 = false
   if genome.network[v1].inStatus == 0 or genome.network[v2].inStatus == 2 then
-    connectionGeneMutate1.in = v1
+    connectionGeneMutate1.input = v1
     v1 = true
   elseif genome.network[v2].inStatus == 0 or genome.network[v1].inStatus == 2 then
     v2 = true
-    connectionGeneMutate1.in = v2
+    connectionGeneMutate1.input = v2
   end
   
   if (genome.network[v1].inStatus == 1 or genome.network[v2].inStatus == 2) and v1 == false then
@@ -224,25 +224,47 @@ excess = 0
 return excess
 end
 
+function createChildGenes(g1,g2)
+  genes = {}
+  if g1.fitness > g2.fitness then
+    tempg = g2
+    g2 = g1
+    g1 = tempg
+  end
+  
+  for key in g2.genes do
+    choose = math.random(1,2)
+    if g1.genes[key]~=nil and choose == 1 and g1.genes[key].status == true then
+      genes[key] = g1.genes[key]
+    else
+      genes[key] = g2.genes[key]
+    end
+  end
+  
+  return genes
+
+end
+
+function createChildNeurons(g1,g2)
+  neurons ={}
+  for key, value in pairs(g1.network) do
+    neurons[key] = value
+  end
+  
+  for key, value in pairs(g2.network) do
+    neurons[key] = value
+  end
+  
+  return neurons
+end
 
 function crossover(genome1,genome2) --genome in the sense that you are passing to this function a set of genomes
-
-
-if genome.mutationChance > math.random() then
---print("Point mutate attempt")
-pointMutateGenome(genome)
---print("pintMutate")
-end
-if genome.linkMutationChance > math.random() then
---print("ConnectMutate Attempt")
-mutateConnectionGene(genome)
-end
-if genome.nodeMutationChance > math.random() then
---print("NodeMutate Attempt")
-mutateNodeGene(genome)
-end
-
---print("Crossover genes number after mutations: "..#genome.genes)
+child_gene = {}
+childGenome = createNewGenome()
+childGenome.genes = createChildGenes(genome1,genome2)
+childGenome.network = createChildNeurons(genome1,genome2)
+childGenome.maxNeuron = math.max(genome1.maxNeuron,genome2.maxNeuron)
+childGenome.maxInnovation = math.max(genome1.maxInnovation,genome2.maxInnovation)
 return genome
 end
 
@@ -252,7 +274,7 @@ function createNewGenome()
   genome.fitness = 0 --genome raw score/avarage number of genomes in species
   genome.network = {} --holds neurons
   genome.score = 0 --genome raw score
-  genome.Fitness = 0
+  genome.fitness = 0
   genome.maxInnovation = 0
   genome.maxNeuron = 0
   genome.mutationChance = genomeMutationChance
@@ -317,12 +339,9 @@ end
 end
 
 function selectionSort(genomes)
---sort by fitness
---int c = 0
 for i = 1, #genomes do
 maxFitnessIndex = i
 for j = i + 1, #genomes do
---will now pick least fitness(closer to 100 weights sum) as highest fitness
 if genomes[j].fitness < genomes[maxFitnessIndex].fitness then
 maxFitnessIndex = j
 end
@@ -360,7 +379,6 @@ function updateInputs(genome)
   inputCount = 1
   for i = 1, #genome.network do
     if genome.network[i].inStatus==0 and inputCount <= #TestInputs then
-      --update input var
       genome.network[i].value = TestInputs[inputCount]
       inputCount = inputCount + 1
     end
