@@ -75,7 +75,7 @@ end
 
 function connectionGene()
 local gene = {}
-gene.in = 0
+gene.input = 0
 gene.out = 0
 gene.weight = 0
 gene.status = true
@@ -83,124 +83,89 @@ gene.innovation = 0 --ancestry monitor
 return gene
 end
 
-
-
-
-
-
-
 --tested(needs reviewing) --TESTED AND REWORKED
 function mutateConnectionGene(genome)
-max = genome.maxInnovation
---grab 2 random nodes from network
 v1 = math.random(1,#genome.network)
 v2 = math.random(1,#genome.network)
---print("max val in connection gene"..max)
 node1 = genome.network[v1] --1
 node2 = genome.network[v2] --1
---loop through the 4 neurons and check if same innov number
-if genome.network[v1].inStatus == 0 and enome.network[v2].inStatus == 0 then
+if genome.network[v1].inStatus == 0 and genome.network[v2].inStatus == 0 then
   print("neurons are both input neurons")
   return 0
 end
-
-if genome.network[v1].inStatus == 1 and enome.network[v2].inStatus == 1 then
+if genome.network[v1].inStatus == 1 and genome.network[v2].inStatus == 1 then
   print("neurons are both output neurons")
   return 0
 end
-
 for key in genome.network[v1].geneInnovationIndex do
   if genome.network[v2].geneInnovationIndex[key]~=nil then
     print("Found matching gene")
     return  0
   end
 end
-
-state1 = 0
-state2 = 0
-state3 = 0
- --check if same innovation indexes
-for i = 1, #node1.weightIndex do
-  for j = 1, #node2.weightIndex do
-    if node1.weightIndex[i] == node2.weightIndex[j] then
-      state1 = 1
-      end
+if genome.network[v1].inStatus ~= genome.network[v2].inStatus then
+  connectionGeneMutate1 = connectionGene()
+  connectionGeneMutate1.innovation = genome.maxInnovation + 1
+  genome.maxInnovation = connectionGeneMutate1.innovation
+  v1 = false
+  v2 = false
+  if genome.network[v1].inStatus == 0 or genome.network[v2].inStatus == 2 then
+    connectionGeneMutate1.in = v1
+    v1 = true
+  elseif genome.network[v2].inStatus == 0 or genome.network[v1].inStatus == 2 then
+    v2 = true
+    connectionGeneMutate1.in = v2
+  end
+  
+  if (genome.network[v1].inStatus == 1 or genome.network[v2].inStatus == 2) and v1 == false then
+    connectionGeneMutate1.out = v1
+  elseif (genome.network[v2].inStatus == 1 or genome.network[v1].inStatus == 2) and v2 == false then
+    connectionGeneMutate1.out = v2
+  end
+  
+  genome.genes[connectionGeneMutate1.innovation] = connectionGeneMutate1
+  genome.maxInnovation = connectionGeneMutate1.innovation
   end
 end
-if state1 == 0 then
-  if node1.inStatus~= 1 then --if input is not a network output node
-    state2 = 1
-    end
-end
-if state2 == 1 then
-  if node2.inStatus~= 0 then --if input is not a network input node
-    state3 = 1
-    end
-end
-if state3 == 1 then
-connectionGeneMutate1 = connectionGene()
-connectionGeneMutate1.input = node1
-connectionGeneMutate1.innovation = max + 1
---print("mutate a: ",connectionGeneMutate1.input.value)
-table.insert(connectionGeneMutate1.input.weightIndex,connectionGeneMutate1.innovation) --register additional gene to neuron
-genome.network[v1] = connectionGeneMutate1.input
-connectionGeneMutate1.out = node2
-table.insert(connectionGeneMutate1.out.weightIndex,connectionGeneMutate1.innovation) --register additional gene to neuron
-genome.network[v2] = connectionGeneMutate1.out
---print("mutate b: ",connectionGeneMutate1.out.value)
-print("a gene has been mutated by connection")
-table.insert(genome.genes,connectionGeneMutate1)
-end
-
---return genome
-end
-
-
-
-
-
-function retunMaxInnovation(genome)
-maxInnovation = genome.genes[1].innovation
-for i = 1, #genome.genes do
-  if genome.genes[i].innovation > maxInnovation then
-  maxInnovation = genome.genes[i].innovation
-  end
-end
-return maxInnovation
-end
-
-
-
-
-
 
 --FULLY REWORKED
 function mutateNodeGene(genome)
 tstval = #genome.genes
-maxInnovation = retunMaxInnovation(genome)
+maxInnovation = genome.maxInnovation
+maxNeuron = genome.maxNeuron
+maxNeuron = maxNeuron + 1
+Neuron = newNeuron()
 --print("Mutation max prev innovation value: "..maxInnovation)
 genepos = math.random(1,#genome.genes)
-connectionGeneTemp = genome.genes[genepos]
-connectionGeneTemp.status = false
-genome.genes[genepos] = connectionGeneTemp
+genome.genes[genepos].status = false
+
 connectionGeneMutate1 = connectionGene()
-connectionGeneMutate1.input = connectionGeneTemp.input --attatch neuron
+connectionGeneMutate1.input = genome.genes[genepos].input --attatch neuron
 connectionGeneMutate1.innovation = maxInnovation + 1
-table.insert(connectionGeneMutate1.input.weightIndex,connectionGeneMutate1.innovation)
-tempNeuron = newNeuron()
-tempNeuron.value = math.random()
-table.insert(tempNeuron.weightIndex,connectionGeneMutate1.innovation)
-connectionGeneMutate1.out = tempNeuron
-table.insert(genome.genes,connectionGeneMutate1)
+connectionGeneMutate1.weight = 1
+connectionGeneMutate1.out = maxNeuron
+
+
 connectionGeneMutate2 = connectionGene()
-connectionGeneMutate2.input = tempNeuron
+connectionGeneMutate2.input = maxNeuron --attatch neuron
 connectionGeneMutate2.innovation = connectionGeneMutate1.innovation + 1
-table.insert(tempNeuron.weightIndex,connectionGeneMutate2.innovation)
-connectionGeneMutate2.out = connectionGeneTemp.out
-table.insert(connectionGeneMutate2.out.weightIndex,connectionGeneMutate2.innovation)
-table.insert(genome.network,tempNeuron)
-table.insert(genome.genes,connectionGeneMutate2)
---print("A GENE HAS BEEN MUTATED BY NODE")
+connectionGeneMutate2.weight = genome.genes[genepos].weight
+connectionGeneMutate2.out = genome.genes[genepos].out
+
+
+Neuron.geneInnovationIndex[connectionGeneMutate1.innovation] = connectionGeneMutate1.innovation
+Neuron.geneInnovationIndex[connectionGeneMutate2.innovation] = connectionGeneMutate2.innovation
+genome.network[genome.genes[genepos].input].geneInnovationIndex[connectionGeneMutate1.innovation] = connectionGeneMutate1.innovation
+genome.network[genome.genes[genepos].out].geneInnovationIndex[connectionGeneMutate2.innovation] = connectionGeneMutate2.innovation
+
+
+genome.genes[connectionGeneMutate1.innovation] = connectionGeneMutate1
+genome.genes[connectionGeneMutate2.innovation] = connectionGeneMutate2
+genome.network[maxNeuron] = Neuron
+
+
+genome.maxInnovation = connectionGeneMutate2.innovation
+genome.maxNeuron = maxNeuron
 end
 
 
@@ -213,6 +178,7 @@ function pointMutateGenome(genome)
     end
 end
 end
+
 function matchingGenes(genome1,genome2)
   matches = 0
   sum_ = 0
@@ -230,8 +196,7 @@ function matchingGenes(genome1,genome2)
   average = sum_/matches
   return matches,average
 end
---(takes disjointed genes from g2), goal is to add to G1
---the genes in the middle
+
 
 
 function disjointGenes(genome1,genome2)
@@ -261,19 +226,7 @@ end
 
 
 function crossover(genome1,genome2) --genome in the sense that you are passing to this function a set of genomes
-matched = matchingGenes(genome1,genome2)
---print("number of matching genes: "..#matched)
-disjointed = disjointGenes(genome1,genome2)
---print("number of disjoint genes: "..#disjointed)
-excess = excessGenes(genome1,genome2)
---print("number of excess genes: "..#excess)
---extract neurons from genes and put in a network
-genes = arrayCombinerForCrossover(matched,disjointed,excess)
---genome.network = nT1
---print("number of all genes: "..#genes)
 
-genome = BuildNetworkOfChildGene(genes)
---print("Crossover genes number before: "..#genome.genes)
 
 if genome.mutationChance > math.random() then
 --print("Point mutate attempt")
@@ -292,96 +245,6 @@ end
 --print("Crossover genes number after mutations: "..#genome.genes)
 return genome
 end
-
-
-
-
-
-
-function BuildNetworkOfChildGene(gene)
-  --build i and o
-  neurons2 = {}
-  genome = createNewGenome()
-  --connect/create inputs
-  --print ("number of genes in child before in BuildChildNetwork "..#gene)
-  for i = 1, #TestInputs do
-    TempInput = newNeuron()
-    --how many in gene are connected to this one?
-    --how to check,check if gene is an input (a zero by calling instats) and by checking the input number
-    --if they are equal, add the connection gene to this neuron
-    for j = 1, #gene do
-      if gene[j].input.inStatus == 0 and gene[j].input.inputNumber==i then
-        TempInput.inStatus = gene[j].input.inStatus
-        TempInput.inputNumber = i
-        table.insert(TempInput.weightIndex,gene[j].innovation)
-        gene[j].input = TempInput
-      --  print("input detected")
-      end
-    end
-    table.insert(genome.network,TempInput)
-end
---
---connect outputs
-  for o = 1, #TestOutputs do
-    TempOutput = newNeuron()
-    for j = 1, #gene do
-      if gene[j].input.inStatus == 1 and gene[j].input.inputNumber==o then
-        TempOutput.inStatus = 1
-        TempOutput.inputNumber = o
-       --  print("output detected which shouldnt be done(illegal)")
-         gene[j].out = TempOutput
-        table.insert(TempOutput.weightIndex,gene[j].innovation)
-      end
-      if gene[j].out.inStatus == 1 and gene[j].out.inputNumber==o then
-        TempOutput.inStatus = 1
-        TempOutput.inputNumber = o
-      --   print("output detected is allowed")
-         gene[j].out = TempOutput
-        table.insert(TempOutput.weightIndex,gene[j].innovation)
-      end
-    end
-    table.insert(genome.network,TempOutput)
-  end
- -- print("number of neurons initially"..#neurons2)
- -- print("number of neurons in networ initially"..#genome.network)
-  for k = 1,#gene do
-    if gene[k].input.inStatus == 2 then
-        table.insert(neurons2,gene[k].input)
-        --make gene notice this new point in neurons2
-        gene[k].input = neurons2[#neurons2]
-    --   print("normal neuron detected 1")
-      end
-      --if out connection gene is a normal neuron
-      if gene[k].out.inStatus == 2 then
-        table.insert(neurons2,gene[k].out)
-        gene[k].out = neurons2[#neurons2]
-      --  print("normal neuron detected 2")
-      end
-    end
-
-
-  for d = 1, #neurons2 do
-    isDuplicate = 0
-    for d1 = d+1, #neurons2 do
-      if neurons2[d] == neurons2[d1] then
-        table.remove(neurons2,d1)
-      end
-    end
-
-  end
---  print("number of neurons after clean  "..#neurons2)
-    for i = 1, #neurons2 do
-      table.insert(genome.network,neurons2[i])
-    end
-    genome.genes = gene
-    --genome.genes = copyGene(gene)
-    --print("number of genes in child after in BuildChildNetwork"..#genome.genes)
-    return genome
-  end
-
---neurons should match with innovation number
-
-
 
 function createNewGenome()
   genome = {} --holds the gene information network (general info)
